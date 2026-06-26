@@ -15,6 +15,7 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
+            position: relative;
         }
         .container {
             max-width: 1400px;
@@ -60,6 +61,144 @@
             color: #3498db;
             text-decoration: none;
         }
+
+        /* 编辑面板按钮 */
+        .edit-btn {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(231,76,60,0.4);
+            z-index: 1000;
+            transition: all 0.3s;
+        }
+        .edit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(231,76,60,0.5);
+        }
+
+        /* 侧边编辑面板 */
+        .edit-panel {
+            position: fixed;
+            top: 0;
+            right: -420px;
+            width: 400px;
+            height: 100vh;
+            background: white;
+            box-shadow: -5px 0 30px rgba(0,0,0,0.2);
+            z-index: 999;
+            transition: right 0.3s ease;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        .edit-panel.open {
+            right: 0;
+        }
+        .edit-panel h2 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+            font-size: 18px;
+        }
+        .edit-panel h3 {
+            color: #3498db;
+            margin: 15px 0 8px 0;
+            font-size: 14px;
+        }
+        .form-group {
+            margin-bottom: 10px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            color: #555;
+            margin-bottom: 4px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        .panel-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            position: sticky;
+            bottom: 20px;
+            background: white;
+            padding: 10px 0;
+        }
+        .panel-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #229954;
+        }
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+        .close-btn:hover {
+            color: #e74c3c;
+        }
+        .process-card {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+        .process-card h4 {
+            color: #2c3e50;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
         @media (max-width: 768px) {
             .header h1 {
                 font-size: 1.5em;
@@ -67,246 +206,444 @@
             body {
                 padding: 10px;
             }
+            .edit-panel {
+                width: 100%;
+                right: -100%;
+            }
         }
     </style>
 </head>
 <body>
+    <button class="edit-btn" onclick="togglePanel()">✏️ 编辑文字</button>
+
+    <div class="edit-panel" id="editPanel">
+        <button class="close-btn" onclick="togglePanel()">×</button>
+        <h2>编辑VSM图文字</h2>
+
+        <h3>📌 标题设置</h3>
+        <div class="form-group">
+            <label>页面主标题</label>
+            <input type="text" data-key="pageTitle" oninput="updateText(this)">
+        </div>
+        <div class="form-group">
+            <label>页面副标题</label>
+            <input type="text" data-key="pageSubtitle" oninput="updateText(this)">
+        </div>
+        <div class="form-group">
+            <label>SVG标题</label>
+            <input type="text" data-key="svgTitle" oninput="updateText(this)">
+        </div>
+        <div class="form-group">
+            <label>产品族</label>
+            <input type="text" data-key="productFamily" oninput="updateText(this)">
+        </div>
+
+        <h3>🏭 供应商</h3>
+        <div class="form-group">
+            <label>供应商名称第一行</label>
+            <input type="text" data-key="supplierLine1" oninput="updateText(this)">
+        </div>
+        <div class="form-group">
+            <label>供应商名称第二行</label>
+            <input type="text" data-key="supplierLine2" oninput="updateText(this)">
+        </div>
+        <div class="form-group">
+            <label>交付周期</label>
+            <input type="text" data-key="supplierLeadTime" oninput="updateText(this)">
+        </div>
+
+        <h3>📦 原材料仓库</h3>
+        <div class="form-group">
+            <label>仓库名称第一行</label>
+            <input type="text" data-key="rawWarehouseLine1" oninput="updateText(this)">
+        </div>
+        <div class="form-group">
+            <label>仓库名称第二行</label>
+            <input type="text" data-key="rawWarehouseLine2" oninput="updateText(this)">
+        </div>
+        <div class="form-group">
+            <label>库存量</label>
+            <input type="text" data-key="rawInventory" oninput="updateText(this)">
+        </div>
+        <div class="form-group">
+            <label>运输时间</label>
+            <input type="text" data-key="rawTransportTime" oninput="updateText(this)">
+        </div>
+
+        <h3>⚙️ 工序 - 冲压</h3>
+        <div class="process-card">
+            <div class="form-group">
+                <label>工序名称</label>
+                <input type="text" data-key="process1Name" oninput="updateText(this)">
+            </div>
+            <div class="form-group">
+                <label>周期时间(C/T)</label>
+                <input type="text" data-key="process1CT" oninput="updateText(this)">
+            </div>
+            <div class="form-group">
+                <label>换模时间(C/O)</label>
+                <input type="text" data-key="process1CO" oninput="updateText(this)">
+            </div>
+            <div class="form-group">
+                <label>可用时间</label>
+                <input type="text" data-key="process1Available" oninput="updateText(this)">
+            </div>
+            <div class="form-group">
+                <label>OEE</label>
+                <input type="text" data-key="process1OEE" oninput="updateText(this)">
+            </div>
+            <div class="form-group">
+                <label>运输时间</label>
+                <input type="text" data-key="process1Transport" oninput="updateText(this)">
+            </div>
+            <div class="form-group">
+                <label>在制品库存</label>
+                <input type="text" data-key="process1WIP" oninput="updateText(this)">
+            </div>
+        </div>
+
+        <h3>🔥 工序 - 焊接</h3>
+        <div class="process-card">
+            <div class="form-group">
+                <label>工序名称</label>
+                <input type="text" data-key="process2Name" oninput="updateText(this)">
+            </div>
+            <div class="form-group">
+                <label>周期时间(C/T)</label>
+                <input type="text" data-key="process2CT" oninput="updateText(this)">
+            </div>
+            <div class="form-group">
+                <label>换模时间(C/O)</label>
+                <input type="text" data-key="process2CO" oninput="updateText(this)">
+            </div>
+            <div class="form-group">
+                <label>可用时间</label>
+                <input type="text" data-key="process2Available" oninput="updateText(this)">
+            </div>
+            <div class="form-group">
+                <label>OEE</label>
+                <input type="text" data-key="process2OEE" oninput="updateText(this)">
+            </div>
+            <div class="form-group">
+                <label>运输时间</label>
+                <input type="text" data-key="process2Transport" oninput="updateText(this)">
+            </div>
+            <div class="form-group">
+                <label>在制品库存</label>
+                <input type="text" data-key="process2WIP" oninput="updateText(this)">
+            </div>
+        </div>
+
+        <h3>🔧 工序 - 组装</h3>
+        <div class="process-card">
+            <div class="form-group">
+                <label>工序名称</label>
+                <input type="text" data-key="process3Name" oninput="updateText(this)">
+            </div>
+            <div class="form-group">
+                <label>周期时间(C/T)</label>
+                <input type="text" data-key="process3CT" oninput="updateText(this)">
+            </div>
+            <div class="form-group">
+                <label>换模时间(C/O)</label>
+                <input type="text" data-key="process3CO" oninput="updateText(this)">
+            </div>
+            <div class="form-group">
+                <label>可用时间</label>
+                <input type="text" data-key="process3Available" oninput="updateText(this)">
+            </div>
+            <div class="form-group">
+                <label>OEE</label>
+                <input type="text" data-key="process3OEE" oninput="updateText(this)">
+            </div>
+            <div class="form-group">
+                <label>运输时间</label>
+                <input type="text" data-key="process3Transport" oninput="updateText(this)">
+            </div>
+            <div class="form-group">
+                <label>在制品库存</label>
+                <input type="text" data-key="process3WIP" oninput="updateText(this)">
+            </div>
+        </div>
+
+        <h3>📦 成品仓库</h3>
+        <div class="form-group">
+            <label>仓库名称第一行</label>
+            <input type="text" data-key="fgWarehouseLine1" oninput="updateText(this)">
+        </div>
+        <div class="form-group">
+            <label>仓库名称第二行</label>
+            <input type="text" data-key="fgWarehouseLine2" oninput="updateText(this)">
+        </div>
+        <div class="form-group">
+            <label>库存量</label>
+            <input type="text" data-key="fgInventory" oninput="updateText(this)">
+        </div>
+
+        <h3>👤 客户</h3>
+        <div class="form-group">
+            <label>客户名称第一行</label>
+            <input type="text" data-key="customerLine1" oninput="updateText(this)">
+        </div>
+        <div class="form-group">
+            <label>客户名称第二行</label>
+            <input type="text" data-key="customerLine2" oninput="updateText(this)">
+        </div>
+        <div class="form-group">
+            <label>客户需求</label>
+            <input type="text" data-key="customerDemand" oninput="updateText(this)">
+        </div>
+
+        <h3>📊 KPI指标</h3>
+        <div class="form-group">
+            <label>增值时间</label>
+            <input type="text" data-key="kpiValueAdd" oninput="updateText(this)">
+        </div>
+        <div class="form-group">
+            <label>总交付周期</label>
+            <input type="text" data-key="kpiLeadTime" oninput="updateText(this)">
+        </div>
+        <div class="form-group">
+            <label>增值时间比</label>
+            <input type="text" data-key="kpiValueRatio" oninput="updateText(this)">
+        </div>
+        <div class="form-group">
+            <label>总库存</label>
+            <input type="text" data-key="kpiTotalInventory" oninput="updateText(this)">
+        </div>
+        <div class="form-group">
+            <label>节拍时间</label>
+            <input type="text" data-key="kpiTaktTime" oninput="updateText(this)">
+        </div>
+
+        <h3>🎯 改善机会</h3>
+        <div class="form-group">
+            <label>改善1</label>
+            <input type="text" data-key="improve1" oninput="updateText(this)">
+        </div>
+        <div class="form-group">
+            <label>改善2</label>
+            <input type="text" data-key="improve2" oninput="updateText(this)">
+        </div>
+        <div class="form-group">
+            <label>改善3</label>
+            <input type="text" data-key="improve3" oninput="updateText(this)">
+        </div>
+
+        <div class="panel-buttons">
+            <button class="panel-btn btn-secondary" onclick="resetConfig()">重置</button>
+            <button class="panel-btn btn-success" onclick="exportConfig()">导出配置</button>
+        </div>
+    </div>
+
     <div class="container">
         <div class="header">
-            <h1>生产线价值流图 (VSM)</h1>
-            <p>电子产品组装生产线 - 价值流分析</p>
+            <h1 id="pageTitle">生产线价值流图 (VSM)</h1>
+            <p id="pageSubtitle">电子产品组装生产线 - 价值流分析</p>
         </div>
         <div class="svg-container">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" width="1200" height="600">
-                <!-- 背景 -->
                 <rect width="1200" height="600" fill="#f8f9fa"/>
 
-                <!-- 标题 -->
-                <text x="600" y="40" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#2c3e50" text-anchor="middle">生产线价值流图 (VSM) 示例</text>
-                <text x="600" y="65" font-family="Arial, sans-serif" font-size="14" fill="#7f8c8d" text-anchor="middle">产品族: 电子产品组装</text>
+                <text id="svgTitle" x="600" y="40" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#2c3e50" text-anchor="middle">生产线价值流图 (VSM) 示例</text>
+                <text id="productFamily" x="600" y="65" font-family="Arial, sans-serif" font-size="14" fill="#7f8c8d" text-anchor="middle">产品族: 电子产品组装</text>
 
-                <!-- ===== 供应商 ===== -->
+                <!-- 供应商 -->
                 <g transform="translate(50, 150)">
                     <rect x="0" y="0" width="80" height="60" fill="#3498db" rx="5"/>
-                    <text x="40" y="25" font-family="Arial, sans-serif" font-size="11" fill="white" text-anchor="middle">原材料</text>
-                    <text x="40" y="40" font-family="Arial, sans-serif" font-size="10" fill="white" text-anchor="middle">供应商</text>
-                    <text x="40" y="80" font-family="Arial, sans-serif" font-size="10" fill="#2c3e50" text-anchor="middle">交付周期: 5天</text>
+                    <text id="supplierLine1" x="40" y="25" font-family="Arial, sans-serif" font-size="11" fill="white" text-anchor="middle">原材料</text>
+                    <text id="supplierLine2" x="40" y="40" font-family="Arial, sans-serif" font-size="10" fill="white" text-anchor="middle">供应商</text>
+                    <text id="supplierLeadTime" x="40" y="80" font-family="Arial, sans-serif" font-size="10" fill="#2c3e50" text-anchor="middle">交付周期: 5天</text>
                 </g>
 
-                <!-- 供应商到仓库的物料流 -->
+                <!-- 供应商到仓库 -->
                 <path d="M 130 180 L 180 180" stroke="#27ae60" stroke-width="3" fill="none"/>
                 <polygon points="175,175 185,180 175,185" fill="#27ae60"/>
                 <text x="155" y="170" font-family="Arial, sans-serif" font-size="10" fill="#27ae60">物料流</text>
 
-                <!-- ===== 原材料仓库 ===== -->
+                <!-- 原材料仓库 -->
                 <g transform="translate(180, 150)">
                     <polygon points="60,0 120,0 120,60 60,60 0,30" fill="#f39c12"/>
-                    <text x="60" y="25" font-family="Arial, sans-serif" font-size="10" fill="#2c3e50" text-anchor="middle">原材料</text>
-                    <text x="60" y="38" font-family="Arial, sans-serif" font-size="10" fill="#2c3e50" text-anchor="middle">库存</text>
-                    <text x="60" y="80" font-family="Arial, sans-serif" font-size="10" fill="#e74c3c" text-anchor="middle">库存: 5000件</text>
+                    <text id="rawWarehouseLine1" x="60" y="25" font-family="Arial, sans-serif" font-size="10" fill="#2c3e50" text-anchor="middle">原材料</text>
+                    <text id="rawWarehouseLine2" x="60" y="38" font-family="Arial, sans-serif" font-size="10" fill="#2c3e50" text-anchor="middle">库存</text>
+                    <text id="rawInventory" x="60" y="80" font-family="Arial, sans-serif" font-size="10" fill="#e74c3c" text-anchor="middle">库存: 5000件</text>
                 </g>
 
-                <!-- 仓库到冲压的物料流 -->
+                <!-- 仓库到冲压 -->
                 <path d="M 300 180 L 360 180" stroke="#27ae60" stroke-width="3" fill="none"/>
                 <polygon points="355,175 365,180 355,185" fill="#27ae60"/>
                 <text x="330" y="170" font-family="Arial, sans-serif" font-size="10" fill="#27ae60">运输</text>
-                <text x="330" y="195" font-family="Arial, sans-serif" font-size="9" fill="#7f8c8d">1天</text>
+                <text id="rawTransportTime" x="330" y="195" font-family="Arial, sans-serif" font-size="9" fill="#7f8c8d">1天</text>
 
-                <!-- ===== 冲压工序 ===== -->
+                <!-- 冲压工序 -->
                 <g transform="translate(360, 130)">
                     <rect x="0" y="0" width="120" height="100" fill="#3498db" rx="5"/>
-                    <text x="60" y="20" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white" text-anchor="middle">冲压</text>
+                    <text id="process1Name" x="60" y="20" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white" text-anchor="middle">冲压</text>
                     <line x1="10" y1="30" x2="110" y2="30" stroke="white" stroke-width="1" opacity="0.5"/>
-                    <text x="60" y="48" font-family="Arial, sans-serif" font-size="10" fill="white" text-anchor="middle">C/T: 2秒</text>
-                    <text x="60" y="62" font-family="Arial, sans-serif" font-size="10" fill="white" text-anchor="middle">C/O: 15分钟</text>
-                    <text x="60" y="76" font-family="Arial, sans-serif" font-size="10" fill="white" text-anchor="middle">可用: 7.5h/天</text>
-                    <text x="60" y="90" font-family="Arial, sans-serif" font-size="10" fill="#ffcc00" text-anchor="middle">OEE: 85%</text>
+                    <text id="process1CT" x="60" y="48" font-family="Arial, sans-serif" font-size="10" fill="white" text-anchor="middle">C/T: 2秒</text>
+                    <text id="process1CO" x="60" y="62" font-family="Arial, sans-serif" font-size="10" fill="white" text-anchor="middle">C/O: 15分钟</text>
+                    <text id="process1Available" x="60" y="76" font-family="Arial, sans-serif" font-size="10" fill="white" text-anchor="middle">可用: 7.5h/天</text>
+                    <text id="process1OEE" x="60" y="90" font-family="Arial, sans-serif" font-size="10" fill="#ffcc00" text-anchor="middle">OEE: 85%</text>
                 </g>
 
-                <!-- 冲压到焊接的物料流 -->
+                <!-- 冲压到焊接 -->
                 <path d="M 480 180 L 540 180" stroke="#27ae60" stroke-width="3" fill="none"/>
                 <polygon points="535,175 545,180 535,185" fill="#27ae60"/>
                 <text x="510" y="170" font-family="Arial, sans-serif" font-size="10" fill="#27ae60">在制品运输</text>
-                <text x="510" y="195" font-family="Arial, sans-serif" font-size="9" fill="#7f8c8d">2小时</text>
+                <text id="process1Transport" x="510" y="195" font-family="Arial, sans-serif" font-size="9" fill="#7f8c8d">2小时</text>
 
-                <!-- ===== 焊接工序 ===== -->
+                <!-- 焊接工序 -->
                 <g transform="translate(540, 130)">
                     <rect x="0" y="0" width="120" height="100" fill="#3498db" rx="5"/>
-                    <text x="60" y="20" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white" text-anchor="middle">焊接</text>
+                    <text id="process2Name" x="60" y="20" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white" text-anchor="middle">焊接</text>
                     <line x1="10" y1="30" x2="110" y2="30" stroke="white" stroke-width="1" opacity="0.5"/>
-                    <text x="60" y="48" font-family="Arial, sans-serif" font-size="10" fill="white" text-anchor="middle">C/T: 5秒</text>
-                    <text x="60" y="62" font-family="Arial, sans-serif" font-size="10" fill="white" text-anchor="middle">C/O: 10分钟</text>
-                    <text x="60" y="76" font-family="Arial, sans-serif" font-size="10" fill="white" text-anchor="middle">可用: 7.5h/天</text>
-                    <text x="60" y="90" font-family="Arial, sans-serif" font-size="10" fill="#ffcc00" text-anchor="middle">OEE: 78%</text>
+                    <text id="process2CT" x="60" y="48" font-family="Arial, sans-serif" font-size="10" fill="white" text-anchor="middle">C/T: 5秒</text>
+                    <text id="process2CO" x="60" y="62" font-family="Arial, sans-serif" font-size="10" fill="white" text-anchor="middle">C/O: 10分钟</text>
+                    <text id="process2Available" x="60" y="76" font-family="Arial, sans-serif" font-size="10" fill="white" text-anchor="middle">可用: 7.5h/天</text>
+                    <text id="process2OEE" x="60" y="90" font-family="Arial, sans-serif" font-size="10" fill="#ffcc00" text-anchor="middle">OEE: 78%</text>
                 </g>
 
-                <!-- 焊接到组装的物料流 -->
+                <!-- 焊接到组装 -->
                 <path d="M 660 180 L 720 180" stroke="#27ae60" stroke-width="3" fill="none"/>
                 <polygon points="715,175 725,180 715,185" fill="#27ae60"/>
                 <text x="690" y="170" font-family="Arial, sans-serif" font-size="10" fill="#27ae60">在制品运输</text>
-                <text x="690" y="195" font-family="Arial, sans-serif" font-size="9" fill="#7f8c8d">30分钟</text>
+                <text id="process2Transport" x="690" y="195" font-family="Arial, sans-serif" font-size="9" fill="#7f8c8d">30分钟</text>
 
-                <!-- ===== 组装工序 ===== -->
+                <!-- 组装工序 -->
                 <g transform="translate(720, 130)">
                     <rect x="0" y="0" width="120" height="100" fill="#3498db" rx="5"/>
-                    <text x="60" y="20" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white" text-anchor="middle">组装</text>
+                    <text id="process3Name" x="60" y="20" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white" text-anchor="middle">组装</text>
                     <line x1="10" y1="30" x2="110" y2="30" stroke="white" stroke-width="1" opacity="0.5"/>
-                    <text x="60" y="48" font-family="Arial, sans-serif" font-size="10" fill="white" text-anchor="middle">C/T: 8秒</text>
-                    <text x="60" y="62" font-family="Arial, sans-serif" font-size="10" fill="white" text-anchor="middle">C/O: 20分钟</text>
-                    <text x="60" y="76" font-family="Arial, sans-serif" font-size="10" fill="white" text-anchor="middle">可用: 7.5h/天</text>
-                    <text x="60" y="90" font-family="Arial, sans-serif" font-size="10" fill="#ffcc00" text-anchor="middle">OEE: 82%</text>
+                    <text id="process3CT" x="60" y="48" font-family="Arial, sans-serif" font-size="10" fill="white" text-anchor="middle">C/T: 8秒</text>
+                    <text id="process3CO" x="60" y="62" font-family="Arial, sans-serif" font-size="10" fill="white" text-anchor="middle">C/O: 20分钟</text>
+                    <text id="process3Available" x="60" y="76" font-family="Arial, sans-serif" font-size="10" fill="white" text-anchor="middle">可用: 7.5h/天</text>
+                    <text id="process3OEE" x="60" y="90" font-family="Arial, sans-serif" font-size="10" fill="#ffcc00" text-anchor="middle">OEE: 82%</text>
                 </g>
 
-                <!-- 组装到成品的物料流 -->
+                <!-- 组装到成品 -->
                 <path d="M 840 180 L 900 180" stroke="#27ae60" stroke-width="3" fill="none"/>
                 <polygon points="895,175 905,180 895,185" fill="#27ae60"/>
                 <text x="870" y="170" font-family="Arial, sans-serif" font-size="10" fill="#27ae60">成品运输</text>
-                <text x="870" y="195" font-family="Arial, sans-serif" font-size="9" fill="#7f8c8d">1天</text>
+                <text id="process3Transport" x="870" y="195" font-family="Arial, sans-serif" font-size="9" fill="#7f8c8d">1天</text>
 
-                <!-- ===== 成品仓库 ===== -->
+                <!-- 成品仓库 -->
                 <g transform="translate(900, 150)">
                     <polygon points="60,0 120,0 120,60 60,60 0,30" fill="#f39c12"/>
-                    <text x="60" y="25" font-family="Arial, sans-serif" font-size="10" fill="#2c3e50" text-anchor="middle">成品</text>
-                    <text x="60" y="38" font-family="Arial, sans-serif" font-size="10" fill="#2c3e50" text-anchor="middle">库存</text>
-                    <text x="60" y="80" font-family="Arial, sans-serif" font-size="10" fill="#e74c3c" text-anchor="middle">库存: 2000件</text>
+                    <text id="fgWarehouseLine1" x="60" y="25" font-family="Arial, sans-serif" font-size="10" fill="#2c3e50" text-anchor="middle">成品</text>
+                    <text id="fgWarehouseLine2" x="60" y="38" font-family="Arial, sans-serif" font-size="10" fill="#2c3e50" text-anchor="middle">库存</text>
+                    <text id="fgInventory" x="60" y="80" font-family="Arial, sans-serif" font-size="10" fill="#e74c3c" text-anchor="middle">库存: 2000件</text>
                 </g>
 
-                <!-- 成品到客户的物料流 -->
+                <!-- 成品到客户 -->
                 <path d="M 1020 180 L 1080 180" stroke="#27ae60" stroke-width="3" fill="none"/>
                 <polygon points="1075,175 1085,180 1075,185" fill="#27ae60"/>
                 <text x="1050" y="170" font-family="Arial, sans-serif" font-size="10" fill="#27ae60">成品流</text>
 
-                <!-- ===== 客户 ===== -->
+                <!-- 客户 -->
                 <g transform="translate(1080, 150)">
                     <rect x="0" y="0" width="80" height="60" fill="#e74c3c" rx="5"/>
-                    <text x="40" y="25" font-family="Arial, sans-serif" font-size="11" fill="white" text-anchor="middle">终端</text>
-                    <text x="40" y="40" font-family="Arial, sans-serif" font-size="10" fill="white" text-anchor="middle">客户</text>
-                    <text x="40" y="80" font-family="Arial, sans-serif" font-size="10" fill="#2c3e50" text-anchor="middle">需求: 800/天</text>
+                    <text id="customerLine1" x="40" y="25" font-family="Arial, sans-serif" font-size="11" fill="white" text-anchor="middle">终端</text>
+                    <text id="customerLine2" x="40" y="40" font-family="Arial, sans-serif" font-size="10" fill="white" text-anchor="middle">客户</text>
+                    <text id="customerDemand" x="40" y="80" font-family="Arial, sans-serif" font-size="10" fill="#2c3e50" text-anchor="middle">需求: 800/天</text>
                 </g>
 
-                <!-- ===== 信息流 (虚线) ===== -->
-                <!-- 客户订单信息 -->
+                <!-- 信息流 -->
                 <path d="M 1080 250 L 900 250 L 900 290" stroke="#9b59b6" stroke-width="2" fill="none" stroke-dasharray="5,3"/>
                 <polygon points="900,285 895,295 905,295" fill="#9b59b6"/>
                 <text x="990" y="245" font-family="Arial, sans-serif" font-size="10" fill="#9b59b6">客户订单</text>
 
-                <!-- 生产计划信息 -->
                 <path d="M 900 290 L 720 290 L 720 250" stroke="#9b59b6" stroke-width="2" fill="none" stroke-dasharray="5,3"/>
                 <polygon points="720,245 715,255 725,255" fill="#9b59b6"/>
                 <text x="810" y="285" font-family="Arial, sans-serif" font-size="10" fill="#9b59b6">生产计划</text>
 
-                <!-- 采购信息 -->
                 <path d="M 720 250 L 540 250 L 540 290" stroke="#9b59b6" stroke-width="2" fill="none" stroke-dasharray="5,3"/>
                 <polygon points="540,285 535,295 545,295" fill="#9b59b6"/>
                 <text x="630" y="245" font-family="Arial, sans-serif" font-size="10" fill="#9b59b6">生产指令</text>
 
-                <!-- 供应商信息 -->
                 <path d="M 540 290 L 360 290 L 360 250" stroke="#9b59b6" stroke-width="2" fill="none" stroke-dasharray="5,3"/>
                 <polygon points="360,245 355,255 365,255" fill="#9b59b6"/>
                 <text x="450" y="285" font-family="Arial, sans-serif" font-size="10" fill="#9b59b6">采购订单</text>
 
-                <!-- 供应商交付信息 -->
                 <path d="M 360 250 L 180 250 L 180 220" stroke="#9b59b6" stroke-width="2" fill="none" stroke-dasharray="5,3"/>
                 <polygon points="180,215 175,225 185,225" fill="#9b59b6"/>
                 <text x="270" y="245" font-family="Arial, sans-serif" font-size="10" fill="#9b59b6">交付计划</text>
 
-                <!-- ===== 时间线 ===== -->
+                <!-- 时间线 -->
                 <g transform="translate(360, 320)">
                     <line x1="0" y1="0" x2="540" y2="0" stroke="#2c3e50" stroke-width="2"/>
-
-                    <!-- 增值时间标记 -->
                     <line x1="60" y1="-10" x2="60" y2="10" stroke="#27ae60" stroke-width="2"/>
                     <text x="60" y="25" font-family="Arial, sans-serif" font-size="9" fill="#27ae60" text-anchor="middle">0</text>
-
                     <line x1="180" y1="-10" x2="180" y2="10" stroke="#27ae60" stroke-width="2"/>
                     <text x="180" y="25" font-family="Arial, sans-serif" font-size="9" fill="#27ae60" text-anchor="middle">2秒</text>
-
                     <line x1="300" y1="-10" x2="300" y2="10" stroke="#27ae60" stroke-width="2"/>
                     <text x="300" y="25" font-family="Arial, sans-serif" font-size="9" fill="#27ae60" text-anchor="middle">增值时间</text>
-
                     <line x1="540" y1="-10" x2="540" y2="10" stroke="#27ae60" stroke-width="2"/>
                     <text x="540" y="25" font-family="Arial, sans-serif" font-size="9" fill="#27ae60" text-anchor="middle">总计</text>
-
-                    <!-- 总生产时间线 -->
                     <text x="270" y="50" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#2c3e50" text-anchor="middle">增值时间: 15秒 / 总交付周期: 约9.5天</text>
                 </g>
 
-                <!-- ===== 库存三角 (在制品) ===== -->
-                <!-- 冲压后库存 -->
+                <!-- 在制品库存 -->
                 <g transform="translate(420, 260)">
                     <polygon points="20,0 40,0 40,25 20,25 0,12.5" fill="#95a5a6"/>
-                    <text x="20" y="40" font-family="Arial, sans-serif" font-size="9" fill="#7f8c8d" text-anchor="middle">1200件</text>
+                    <text id="process1WIP" x="20" y="40" font-family="Arial, sans-serif" font-size="9" fill="#7f8c8d" text-anchor="middle">1200件</text>
                 </g>
-
-                <!-- 焊接后库存 -->
                 <g transform="translate(600, 260)">
                     <polygon points="20,0 40,0 40,25 20,25 0,12.5" fill="#95a5a6"/>
-                    <text x="20" y="40" font-family="Arial, sans-serif" font-size="9" fill="#7f8c8d" text-anchor="middle">800件</text>
+                    <text id="process2WIP" x="20" y="40" font-family="Arial, sans-serif" font-size="9" fill="#7f8c8d" text-anchor="middle">800件</text>
                 </g>
-
-                <!-- 组装前库存 -->
                 <g transform="translate(780, 260)">
                     <polygon points="20,0 40,0 40,25 20,25 0,12.5" fill="#95a5a6"/>
-                    <text x="20" y="40" font-family="Arial, sans-serif" font-size="9" fill="#7f8c8d" text-anchor="middle">500件</text>
+                    <text id="process3WIP" x="20" y="40" font-family="Arial, sans-serif" font-size="9" fill="#7f8c8d" text-anchor="middle">500件</text>
                 </g>
 
-                <!-- ===== 图例 ===== -->
+                <!-- 图例 -->
                 <g transform="translate(50, 400)">
                     <text x="0" y="0" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#2c3e50">图例 Legend</text>
-
-                    <!-- 工序 -->
                     <rect x="0" y="15" width="40" height="25" fill="#3498db" rx="3"/>
                     <text x="50" y="32" font-family="Arial, sans-serif" font-size="11" fill="#2c3e50">工序 Process</text>
-
-                    <!-- 库存 -->
                     <polygon points="140,27 160,27 160,52 140,52 130,39.5" fill="#f39c12"/>
                     <text x="170" y="39" font-family="Arial, sans-serif" font-size="11" fill="#2c3e50">库存 Inventory</text>
-
-                    <!-- 物料流 -->
                     <line x1="240" y1="39" x2="280" y2="39" stroke="#27ae60" stroke-width="3"/>
                     <polygon points="275,34 285,39 275,44" fill="#27ae60"/>
                     <text x="295" y="43" font-family="Arial, sans-serif" font-size="11" fill="#2c3e50">物料流 Material Flow</text>
-
-                    <!-- 信息流 -->
                     <line x1="420" y1="39" x2="460" y2="39" stroke="#9b59b6" stroke-width="2" stroke-dasharray="5,3"/>
                     <text x="470" y="43" font-family="Arial, sans-serif" font-size="11" fill="#2c3e50">信息流 Information Flow</text>
                 </g>
 
-                <!-- ===== KPI指标 ===== -->
+                <!-- KPI指标 -->
                 <g transform="translate(50, 480)">
                     <text x="0" y="0" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#2c3e50">关键指标 KPIs</text>
-
                     <rect x="0" y="15" width="200" height="60" fill="white" stroke="#bdc3c7" rx="5"/>
                     <text x="15" y="35" font-family="Arial, sans-serif" font-size="11" fill="#2c3e50">增值时间 Value-add Time:</text>
-                    <text x="15" y="55" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#27ae60">15秒</text>
+                    <text id="kpiValueAdd" x="15" y="55" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#27ae60">15秒</text>
                     <text x="70" y="55" font-family="Arial, sans-serif" font-size="11" fill="#7f8c8d">(0.004% of Lead Time)</text>
 
                     <rect x="220" y="15" width="200" height="60" fill="white" stroke="#bdc3c7" rx="5"/>
                     <text x="235" y="35" font-family="Arial, sans-serif" font-size="11" fill="#2c3e50">生产前置时间 Lead Time:</text>
-                    <text x="235" y="55" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#e74c3c">约9.5天</text>
+                    <text id="kpiLeadTime" x="235" y="55" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#e74c3c">约9.5天</text>
 
                     <rect x="440" y="15" width="200" height="60" fill="white" stroke="#bdc3c7" rx="5"/>
                     <text x="455" y="35" font-family="Arial, sans-serif" font-size="11" fill="#2c3e50">增值时间比:</text>
-                    <text x="455" y="55" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#f39c12">0.004%</text>
+                    <text id="kpiValueRatio" x="455" y="55" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#f39c12">0.004%</text>
 
                     <rect x="660" y="15" width="200" height="60" fill="white" stroke="#bdc3c7" rx="5"/>
                     <text x="675" y="35" font-family="Arial, sans-serif" font-size="11" fill="#2c3e50">库存周转 Inventory:</text>
-                    <text x="675" y="55" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#3498db">8500件</text>
+                    <text id="kpiTotalInventory" x="675" y="55" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#3498db">8500件</text>
                 </g>
 
-                <!-- ===== 改善机会 ===== -->
+                <!-- 改善机会 -->
                 <g transform="translate(880, 480)">
                     <text x="0" y="0" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#e74c3c">改善机会 Improvement Opportunities</text>
-                    <text x="0" y="20" font-family="Arial, sans-serif" font-size="11" fill="#2c3e50">• 减少焊接工序换模时间</text>
-                    <text x="0" y="36" font-family="Arial, sans-serif" font-size="11" fill="#2c3e50">• 降低在制品库存</text>
-                    <text x="0" y="52" font-family="Arial, sans-serif" font-size="11" fill="#2c3e50">• 实施拉动系统</text>
+                    <text id="improve1" x="0" y="20" font-family="Arial, sans-serif" font-size="11" fill="#2c3e50">• 减少焊接工序换模时间</text>
+                    <text id="improve2" x="0" y="36" font-family="Arial, sans-serif" font-size="11" fill="#2c3e50">• 降低在制品库存</text>
+                    <text id="improve3" x="0" y="52" font-family="Arial, sans-serif" font-size="11" fill="#2c3e50">• 实施拉动系统</text>
                 </g>
 
-                <!-- ===== 节拍时间 ===== -->
+                <!-- 节拍时间 -->
                 <g transform="translate(880, 280)">
                     <rect x="0" y="0" width="100" height="50" fill="#2ecc71" rx="5"/>
                     <text x="50" y="20" font-family="Arial, sans-serif" font-size="10" fill="white" text-anchor="middle">客户需求节拍</text>
-                    <text x="50" y="38" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white" text-anchor="middle">T/T = 10.8秒</text>
+                    <text id="kpiTaktTime" x="50" y="38" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white" text-anchor="middle">T/T = 10.8秒</text>
                 </g>
 
             </svg>
@@ -315,5 +652,135 @@
             <p>生产线VSM价值流图 | 精益生产工具</p>
         </div>
     </div>
+
+    <script>
+        // 默认配置数据
+        const defaultConfig = {
+            pageTitle: "生产线价值流图 (VSM)",
+            pageSubtitle: "电子产品组装生产线 - 价值流分析",
+            svgTitle: "生产线价值流图 (VSM) 示例",
+            productFamily: "产品族: 电子产品组装",
+            supplierLine1: "原材料",
+            supplierLine2: "供应商",
+            supplierLeadTime: "交付周期: 5天",
+            rawWarehouseLine1: "原材料",
+            rawWarehouseLine2: "库存",
+            rawInventory: "库存: 5000件",
+            rawTransportTime: "1天",
+            process1Name: "冲压",
+            process1CT: "C/T: 2秒",
+            process1CO: "C/O: 15分钟",
+            process1Available: "可用: 7.5h/天",
+            process1OEE: "OEE: 85%",
+            process1Transport: "2小时",
+            process1WIP: "1200件",
+            process2Name: "焊接",
+            process2CT: "C/T: 5秒",
+            process2CO: "C/O: 10分钟",
+            process2Available: "可用: 7.5h/天",
+            process2OEE: "OEE: 78%",
+            process2Transport: "30分钟",
+            process2WIP: "800件",
+            process3Name: "组装",
+            process3CT: "C/T: 8秒",
+            process3CO: "C/O: 20分钟",
+            process3Available: "可用: 7.5h/天",
+            process3OEE: "OEE: 82%",
+            process3Transport: "1天",
+            process3WIP: "500件",
+            fgWarehouseLine1: "成品",
+            fgWarehouseLine2: "库存",
+            fgInventory: "库存: 2000件",
+            customerLine1: "终端",
+            customerLine2: "客户",
+            customerDemand: "需求: 800/天",
+            kpiValueAdd: "15秒",
+            kpiLeadTime: "约9.5天",
+            kpiValueRatio: "0.004%",
+            kpiTotalInventory: "8500件",
+            kpiTaktTime: "T/T = 10.8秒",
+            improve1: "• 减少焊接工序换模时间",
+            improve2: "• 降低在制品库存",
+            improve3: "• 实施拉动系统"
+        };
+
+        let currentConfig = {...defaultConfig};
+
+        // 初始化
+        function init() {
+            // 从localStorage加载保存的配置
+            const saved = localStorage.getItem('vsmConfig');
+            if (saved) {
+                currentConfig = {...defaultConfig, ...JSON.parse(saved)};
+            }
+            applyConfig();
+            fillForm();
+        }
+
+        // 应用配置到页面
+        function applyConfig() {
+            for (const key in currentConfig) {
+                const el = document.getElementById(key);
+                if (el) {
+                    el.textContent = currentConfig[key];
+                }
+            }
+        }
+
+        // 填充表单
+        function fillForm() {
+            const inputs = document.querySelectorAll('.edit-panel input[data-key]');
+            inputs.forEach(input => {
+                const key = input.dataset.key;
+                if (currentConfig[key] !== undefined) {
+                    input.value = currentConfig[key];
+                }
+            });
+        }
+
+        // 实时更新文字
+        function updateText(input) {
+            const key = input.dataset.key;
+            const value = input.value;
+            currentConfig[key] = value;
+            const el = document.getElementById(key);
+            if (el) {
+                el.textContent = value;
+            }
+            // 保存到localStorage
+            localStorage.setItem('vsmConfig', JSON.stringify(currentConfig));
+        }
+
+        // 切换面板
+        function togglePanel() {
+            const panel = document.getElementById('editPanel');
+            panel.classList.toggle('open');
+        }
+
+        // 重置配置
+        function resetConfig() {
+            if (confirm('确定要重置所有文字为默认值吗？')) {
+                currentConfig = {...defaultConfig};
+                localStorage.removeItem('vsmConfig');
+                applyConfig();
+                fillForm();
+            }
+        }
+
+        // 导出配置
+        function exportConfig() {
+            const jsonStr = JSON.stringify(currentConfig, null, 2);
+            const blob = new Blob([jsonStr], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'vsm_config.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
 </body>
 </html>
