@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}新建项目 - NPE{% endblock %}
+
+{% block content %}
+<div style="max-width:560px;margin:0 auto;">
+    <h2 style="font-size:1.2rem;font-weight:700;margin-bottom:0.5rem;">新建项目</h2>
+    <p style="color:var(--gray-500);font-size:0.85rem;margin-bottom:1rem;">填写基本信息后进入工序评估页面</p>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="POST">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>项目名称 *</label>
+                        <input type="text" name="project_name" class="form-control" required placeholder="例：ABC客户智能电表">
+                    </div>
+                    <div class="form-group">
+                        <label>项目编号</label>
+                        <input type="text" name="project_number" class="form-control" placeholder="例：PRJ-2026-001">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>客户</label>
+                        <input type="text" name="customer" class="form-control" placeholder="客户名称">
+                    </div>
+                    <div class="form-group">
+                        <label>工程师</label>
+                        <input type="text" name="created_by" class="form-control" value="{{ current_user }}" readonly
+                            style="background:var(--gray-50);color:var(--gray-700);">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>事由 *</label>
+                        <select name="reason" class="form-control" required>
+                            <option value="">-- 选择事由 --</option>
+                            <option value="新项目报价输入">新项目报价输入</option>
+                            <option value="ECN变更输入">ECN变更输入</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>项目阶段</label>
+                        <select name="project_phase" class="form-control">
+                            <option value="">-- 选择项目阶段 --</option>
+                            {% for short, full in project_phases.items() %}
+                            <option value="{{ short }}">{{ short }} - {{ full }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:1rem;">
+                    <a href="{{ url_for('index') }}" class="btn btn-outline">取消</a>
+                    <button type="submit" class="btn btn-primary">创建并编辑</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

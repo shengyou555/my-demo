@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>{{ project.project_number or 'NPE' }}_{{ project.project_name }}_{{ project.created_by or 'Unknown' }}_{{ project.project_phase or '-' }}_{{ project.created_at[:16] | replace(' ', '_') | replace(':', '') }}</title>
+<style>
+    @page { size: A4 portrait; margin: 18mm 15mm 18mm 15mm; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: "SimSun", "Microsoft YaHei", sans-serif; font-size: 10pt; color: #222; line-height: 1.6; }
+
+    .print-bar {
+        background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 6px;
+        padding: 10px 16px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .print-bar .hint { font-size: 9pt; color: #6b7280; }
+    .print-btn {
+        background: #2563eb; color: white; border: none; padding: 8px 20px;
+        border-radius: 6px; font-size: 10pt; font-weight: 600; cursor: pointer;
+    }
+    .print-btn:hover { background: #1d4ed8; }
+    @media print { .print-bar { display: none !important; } }
+
+    .doc-header { border-bottom: 3px solid #2563eb; padding-bottom: 10px; margin-bottom: 14px; }
+    .doc-header h1 { font-size: 16pt; color: #1e40af; }
+    .doc-header .subtitle { font-size: 9pt; color: #666; }
+    .doc-meta { display: flex; flex-wrap: wrap; gap: 20px; margin-top: 8px; font-size: 8.5pt; color: #555; }
+    .doc-meta .value { font-weight: bold; color: #222; }
+
+    .summary-box { display: flex; gap: 10px; margin-bottom: 14px; }
+    .summary-item {
+        flex: 1; background: #f0f7ff; border: 1px solid #bfdbfe;
+        border-radius: 6px; padding: 8px 12px; text-align: center;
+    }
+    .summary-item .label { font-size: 7.5pt; color: #6b7280; text-transform: uppercase; margin-bottom: 2px; }
+    .summary-item .value { font-size: 14pt; font-weight: bold; color: #1e40af; }
+    .summary-item .value.danger { font-size: 11pt; color: #dc2626; }
+
+    .section { margin-bottom: 16px; }
+    .section-title {
+        font-size: 11pt; font-weight: bold; color: #1e3a5f;
+        border-left: 4px solid #2563eb; padding-left: 8px; margin-bottom: 8px;
+    }
+    .line-section-title {
+        font-size: 10pt; font-weight: bold; color: #374151;
+        background: #f3f4f6; padding: 6px 10px; border-radius: 4px; margin-bottom: 6px;
+        display: flex; justify-content: space-between;
+    }
+    .line-section-title .line-stat { font-weight: normal; color: #6b7280; font-size: 8.5pt; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 9pt; }
+    table th {
+        background: #1e3a5f; color: white; padding: 6px 8px;
+        text-align: left; font-weight: 600; font-size: 8.5pt;
+    }
+    table th.right, table td.right { text-align: right; }
+    table td { padding: 5px 8px; border-bottom: 1px solid #e5e7eb; }
+    table tr:nth-child(even) { background: #f9fafb; }
+    .tool-cell { padding-left: 24px; color: #666; }
+    .total-row { background: #eff6ff !important; font-weight: bold; border-top: 2px solid #2563eb; }
+    .line-total-row { background: #f3f4f6 !important; font-weight: 600; border-top: 1px solid #d1d5db; }
+    .bottleneck-tag {
+        display: inline-block; background: #dc2626; color: white;
+        font-size: 7pt; padding: 1px 5px; border-radius: 3px; font-weight: bold;
+    }
+
+    .sign-section { margin-top: 20px; page-break-inside: avoid; }
+    .sign-table { border: 1px solid #d1d5db; border-radius: 6px; }
+    .sign-table td { border: 1px solid #e5e7eb; padding: 12px 10px; font-size: 9pt; }
+    .sign-label { font-weight: bold; color: #374151; width: 80px; }
+    .sign-blank { border-bottom: 1px solid #999; display: inline-block; min-width: 120px; height: 14px; }
+
+    .doc-footer {
+        margin-top: 20px; padding-top: 10px; border-top: 1px solid #e5e7eb;
+        font-size: 7.5pt; color: #999; display: flex; justify-content: space-between;
+    }
+</style>
+</head>
+<body>
+
+<div class="print-bar">
+    <span class="hint">点击右侧按钮打印或另存为 PDF（Ctrl+P 也可以）</span>
+    <button class="print-btn" onclick="window.print()">打印 / 另存为 PDF</button>
+</div>
+
+<div class="doc-header">
+    <h1>新程序工艺评估报告</h1>
+    <div class="subtitle">New Program Process Evaluation Report</div>
+    <div class="doc-meta">
+        <span>项目名称：<span class="value">{{ project.project_name }}</span></span>
+        <span>项目编号：<span class="value">{{ project.project_number or '-' }}</span></span>
+        <span>客户：<span class="value">{{ project.customer or '-' }}</span></span>
+        <span>事由：<span class="value">{{ project.reason or '-' }}</span></span>
+    </div>
+    <div class="doc-meta">
+        <span>工程师：<span class="value">{{ project.created_by or '-' }}</span></span>
+        <span>项目阶段：<span class="value" title="{{ project_phases.get(project.project_phase, '') }}">{{ project.project_phase or '-' }}</span></span>
+        <span>创建时间：<span class="value">{{ project.created_at[:16] }}</span></span>
+        <span>报告生成：<span class="value">{{ generated_at }}</span></span>
+    </div>
+</div>
+
+<div class="summary-box">
+    <div class="summary-item">
+        <div class="label">勾选工序数</div>
+        <div class="value">{{ process_count }}</div>
+    </div>
+    <div class="summary-item">
+        <div class="label">投资总额 (USD)</div>
+        <div class="value">${{ '%.2f' % total_investment }}</div>
+    </div>
+    <div class="summary-item">
+        <div class="label">作业人员总数</div>
+        <div class="value">{{ '%.1f' % total_headcount if total_headcount % 1 != 0 else total_headcount|int }}</div>
+    </div>
+    {% if bottleneck %}
+    <div class="summary-item">
+        <div class="label">瓶颈工序 / 工时</div>
+        <div class="value danger">{{ bottleneck.item_name }} / {{ '%.1f' % (bottleneck.cycle_time_sec or 0) }}s</div>
+    </div>
+    {% endif %}
+</div>
+
+<div class="section">
+    <div class="section-title">制程明细及设备投资</div>
+    {% if lines_data %}
+        {% for line_type, data in lines_data.items() %}
+        <div class="line-section-title">
+            <span>产线：{{ line_type }}</span>
+            <span class="line-stat">
+                投资: ${{ '%.2f' % data.total_investment }} |
+                人员: {{ '%.1f' % data.total_headcount if data.total_headcount % 1 != 0 else data.total_headcount|int }} |
+                瓶颈: {% if data.bottleneck %}{{ data.bottleneck.item_name }} ({{ '%.1f' % (data.bottleneck.cycle_time_sec or 0) }}s){% else %}--{% endif %}
+            </span>
+        </div>
+        <table style="margin-bottom: 12px;">
+            <thead>
+                <tr>
+                    <th style="width:30px;">#</th>
+                    <th>制程 / 工具治具</th>
+                    <th style="width:90px;">类型</th>
+                    <th class="right" style="width:100px;">投资金额 (USD)</th>
+                    <th class="right" style="width:75px;">标准工时</th>
+                    <th class="right" style="width:65px;">作业人数</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% set process_index = [0] %}
+                {% for it in data['items'] %}
+                <tr>
+                    {% if it.item_type == 'process' %}
+                    {% set _ = process_index.append(process_index.pop() + 1) %}
+                    <td class="right">{{ process_index[0] }}</td>
+                    <td style="font-weight:600;">
+                        {{ it.item_name }}
+                        {% if it == bottleneck %}<span class="bottleneck-tag">BOTTLENECK</span>{% endif %}
+                    </td>
+                    <td>工序</td>
+                    <td class="right">${{ '%.2f' % (it.investment_usd or 0) }}</td>
+                    <td class="right">{{ '%.1f' % (it.cycle_time_sec or 0) }}s</td>
+                    <td class="right">{{ it.operator_count or 0 }}</td>
+                    {% else %}
+                    <td></td>
+                    <td class="tool-cell">{{ it.item_name }}</td>
+                    <td>工具/治具</td>
+                    <td class="right">${{ '%.2f' % (it.investment_usd or 0) }}</td>
+                    <td class="right">--</td>
+                    <td class="right">--</td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+                <tr class="line-total-row">
+                    <td colspan="3" class="right">{{ line_type }} 小计</td>
+                    <td class="right">${{ '%.2f' % data.total_investment }}</td>
+                    <td></td>
+                    <td class="right">{{ '%.1f' % data.total_headcount if data.total_headcount % 1 != 0 else data.total_headcount|int }}</td>
+                </tr>
+            </tbody>
+        </table>
+        {% endfor %}
+        <table>
+            <tbody>
+                <tr class="total-row">
+                    <td colspan="3" class="right">合 计</td>
+                    <td class="right">${{ '%.2f' % total_investment }}</td>
+                    <td></td>
+                    <td class="right">{{ '%.1f' % total_headcount if total_headcount % 1 != 0 else total_headcount|int }}</td>
+                </tr>
+            </tbody>
+        </table>
+    {% else %}
+    <p style="color:#999;text-align:center;padding:20px;">暂无数据</p>
+    {% endif %}
+</div>
+
+{% if version_history %}
+<div class="section" style="page-break-inside: auto;">
+    <div class="section-title">变更记录</div>
+    <table>
+        <thead>
+            <tr>
+                <th style="width:26px;">#</th>
+                <th style="width:88px;">日期时间</th>
+                <th style="width:72px;">工程师</th>
+                <th>产线</th>
+                <th style="width:48px;">阶段</th>
+                <th>修改说明</th>
+                <th style="width:38px;">项数</th>
+                <th style="width:145px;">与上一阶段差异</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for v in version_history %}
+            <tr>
+                <td class="right">{{ loop.index }}</td>
+                <td>{{ v.updated_at[:16] }}</td>
+                <td>{{ v.updated_by }}</td>
+                <td>{{ v.line_type or '-' }}</td>
+                <td>{{ v.project_phase or '-' }}</td>
+                <td>{{ v.comment or '-' }}</td>
+                <td class="right">{{ v.item_count }}</td>
+                <td style="font-size:7.5pt; line-height:1.4;">
+                    {% if v.diff %}
+                        <div style="color:#4b5563; margin-bottom:1px;">vs {{ v.diff.prev_phase }}:</div>
+                        <div>投资{{ v.diff.investment_str }} 人员{{ v.diff.headcount_str }}</div>
+                        <div>项数{{ v.diff.item_str }}</div>
+                        {% if v.diff.added_names %}
+                        <div style="color:#059669;">+新增: {{ v.diff.added_names }}</div>
+                        {% endif %}
+                        {% if v.diff.removed_names %}
+                        <div style="color:#dc2626;">-删除: {{ v.diff.removed_names }}</div>
+                        {% endif %}
+                        {% if v.diff.modified_names %}
+                        <div style="color:#d97706;">~修改: {{ v.diff.modified_names }}</div>
+                        {% endif %}
+                    {% elif v.diff_status == 'no_prev_data' %}
+                        <span style="color:#9ca3af;">无上一阶段数据</span>
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<div class="sign-section">
+    <div class="section-title">审批签名</div>
+    <table class="sign-table">
+        <tr>
+            <td class="sign-label">制表</td>
+            <td>姓名：<strong>{{ project.created_by or '-' }}</strong></td>
+            <td>签字：<span class="sign-blank"></span></td>
+            <td>日期：<span class="sign-blank"></span></td>
+        </tr>
+        <tr>
+            <td class="sign-label">审核</td>
+            <td>姓名：<strong>{{ reviewer_name or '-' }}</strong></td>
+            <td>签字：<span class="sign-blank"></span></td>
+            <td>日期：<span class="sign-blank"></span></td>
+        </tr>
+        <tr>
+            <td class="sign-label">批准</td>
+            <td>姓名：<strong>{{ approver_name or '-' }}</strong></td>
+            <td>签字：<span class="sign-blank"></span></td>
+            <td>日期：<span class="sign-blank"></span></td>
+        </tr>
+    </table>
+</div>
+
+<div class="doc-footer">
+    <span>NPE - 新程序工艺评估系统 | 机密文件 - 仅供内部使用</span>
+    <span>Generated: {{ generated_at }}</span>
+</div>
+
+</body>
+</html>

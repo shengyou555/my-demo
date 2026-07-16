@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NPE - 登录</title>
+<style>
+    :root {
+        --primary: #2563eb; --primary-hover: #1d4ed8;
+        --gray-100: #f3f4f6; --gray-200: #e5e7eb; --gray-300: #d1d5db;
+        --gray-500: #6b7280; --gray-700: #374151; --gray-800: #1f2937;
+        --danger: #dc2626;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; background: var(--gray-100); color: var(--gray-800); line-height: 1.6; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .login-card { background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); padding: 40px 36px; width: 380px; max-width: 90vw; }
+    .login-card h1 { font-size: 1.5rem; font-weight: 700; text-align: center; margin-bottom: 4px; }
+    .login-card h1 span { color: var(--primary); }
+    .login-card .subtitle { text-align: center; color: var(--gray-500); font-size: 0.85rem; margin-bottom: 28px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 0.75rem; font-weight: 600; color: var(--gray-500); text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.3px; }
+    .form-control { width: 100%; padding: 10px 12px; border: 1px solid var(--gray-300); border-radius: 6px; font-size: 0.875rem; color: var(--gray-800); }
+    .form-control:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(37,99,235,0.15); }
+    .btn { display: inline-flex; align-items: center; justify-content: center; width: 100%; padding: 10px 16px; border: none; border-radius: 6px; font-size: 0.875rem; font-weight: 600; cursor: pointer; text-decoration: none; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .error { color: var(--danger); font-size: 0.8rem; text-align: center; margin-bottom: 16px; padding: 8px; background: #fef2f2; border-radius: 4px; }
+    .setup-link { text-align: center; margin-top: 20px; font-size: 0.8rem; color: var(--gray-500); }
+    .setup-link a { color: var(--primary); text-decoration: none; }
+    .setup-link a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="login-card">
+    <h1><span>NPE</span> | 新程序工艺评估</h1>
+    <p class="subtitle">请登录以继续</p>
+    {% if error %}
+    <div class="error">{{ error }}</div>
+    {% endif %}
+    <form method="POST">
+        <div class="form-group">
+            <label>用户名（工程师）</label>
+            <select name="username" class="form-control" required>
+                <option value="">-- 请选择 --</option>
+                {% for p in preparers %}
+                <option value="{{ p }}">{{ p }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label>密码</label>
+            <input type="password" name="password" class="form-control" required placeholder="请输入密码">
+        </div>
+        <button type="submit" class="btn btn-primary">登 录</button>
+    </form>
+    <div class="setup-link">首次使用？<a href="{{ url_for('setup') }}">点击设置密码</a></div>
+</div>
+</body>
+</html>

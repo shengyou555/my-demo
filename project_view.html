@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% block title %}{{ project.project_name }} - 查看{% endblock %}
+
+{% block extra_css %}
+<style>
+    .line-section {
+        background: white; border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        margin-bottom: 1rem;
+    }
+    .line-section-header {
+        padding: 0.75rem 1.25rem;
+        border-bottom: 1px solid var(--gray-100);
+        display: flex; align-items: center; justify-content: space-between;
+        background: var(--gray-50);
+        border-radius: 8px 8px 0 0;
+    }
+    .line-section-header h3 { font-size: 0.95rem; font-weight: 600; }
+    .line-section-header .line-stats {
+        font-size: 0.8rem; color: var(--gray-500);
+        display: flex; gap: 16px;
+    }
+    .line-section-header .line-stats span { color: var(--gray-800); font-weight: 600; }
+    .process-card {
+        background: white; border-radius: 8px;
+        margin-bottom: 0.5rem; border-left: 4px solid var(--primary);
+    }
+    .process-card.is-bottleneck { border-left-color: var(--danger); }
+    .card-head {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 0.75rem 1rem; border-bottom: 1px solid var(--gray-100);
+    }
+    .card-head h3 { font-size: 0.9rem; font-weight: 600; }
+    .card-head .badge-bn {
+        background: var(--danger-light); color: var(--danger);
+        font-size: 0.7rem; padding: 1px 8px; border-radius: 99px; font-weight: 600; margin-left: 8px;
+    }
+    .card-fields {
+        display: grid; grid-template-columns: 1fr 1fr 1fr;
+        gap: 0.75rem; padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--gray-100);
+    }
+    .card-fields .field-group label {
+        font-size: 0.7rem; color: var(--gray-500); text-transform: uppercase;
+        letter-spacing: 0.3px; margin-bottom: 2px; display: block;
+    }
+    .card-fields .field-group .value { font-weight: 600; font-size: 0.9rem; }
+    .card-tools {
+        padding: 0.5rem 1rem 0.75rem; font-size: 0.85rem; color: var(--gray-600);
+    }
+    .tool-item { padding: 2px 0; display: flex; justify-content: space-between; }
+    .tool-item .tool-inv { font-weight: 500; color: var(--gray-800); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+    <h2 style="font-size:1.2rem;font-weight:700;">{{ project.project_name }}</h2>
+    <div style="display:flex;gap:8px;">
+        <a href="{{ url_for('edit_project', project_id=project.id) }}" class="btn btn-primary">编辑</a>
+        <a href="{{ url_for('export_pdf', project_id=project.id) }}" class="btn btn-success" target="_blank">导出 PDF</a>
+    </div>
+</div>
+
+<!-- Project Info -->
+<div class="card">
+    <div class="card-body">
+        <div class="form-row">
+            <div class="form-group"><label>项目名称</label><div style="padding:7px 0;font-weight:600;">{{ project.project_name }}</div></div>
+            <div class="form-group"><label>项目编号</label><div style="padding:7px 0;">{{ project.project_number or '-' }}</div></div>
+            <div class="form-group"><label>客户</label><div style="padding:7px 0;">{{ project.customer or '-' }}</div></div>
+            <div class="form-group"><label>工程师</label><div style="padding:7px 0;">{{ project.created_by or '-' }}</div></div>
+            <div class="form-group"><label>事由</label><div style="padding:7px 0;">{{ project.reason or '-' }}</div></div>
+            <div class="form-group"><label>项目阶段</label><div style="padding:7px 0;" title="{{ project_phases.get(project.project_phase, '') }}">{{ project.project_phase or '-' }}</div></div>
+        </div>
+    </div>
+</div>
+
+<!-- Global Stats -->
+{% set all_procs = items | selectattr('item_type', 'equalto', 'process') | list %}
+{% set total_inv = items | sum(attribute='investment_usd') %}
+{% set total_hc = all_procs | sum(attribute='operator_count') %}
+{% set global_bn = all_procs | sort(attribute='cycle_time_sec', reverse=true) | first if all_procs else none %}
+
+<div class="stat-grid">
+    <div class="stat-card"><div class="stat-label">工序数</div><div class="stat-value">{{ all_procs | length }}</div></div>
+    <div class="stat-card"><div class="stat-label">投资总额 (USD)</div><div class="stat-value usd">${{ '%.2f' % total_inv }}</div></div>
+    <div class="stat-card"><div class="stat-label">作业人员总数</div><div class="stat-value">{{ '%.1f' % total_hc if total_hc % 1 != 0 else total_hc | int }}</div></div>
+    <div class="stat-card"><div class="stat-label">瓶颈工序</div><div class="stat-value danger" style="font-size:0.95rem;">{% if global_bn and global_bn.cycle_time_sec %}{{ global_bn.item_name }} ({{ '%.1f' % global_bn.cycle_time_sec }}s){% else %}--{% endif %}</div></div>
+</div>
+
+<!-- Line Sections -->
+{% set line_groups = {} %}
+{% for it in items %}
+    {% set lt = it.line_type or project.line_type or '未分类' %}
+    {% if lt not in line_groups %}{% set _ = line_groups.update({lt: []}) %}{% endif %}
+    {% set _ = line_groups[lt].append(it) %}
+{% endfor %}
+
+{% if line_groups %}
+{% for lt, line_items in line_groups.items() %}
+{% set line_procs = line_items | selectattr('item_type', 'equalto', 'process') | list %}
+{% set line_inv = line_items | sum(attribute='investment_usd') %}
+{% set line_hc = line_procs | sum(attribute='operator_count') %}
+{% set line_bn = line_procs | sort(attribute='cycle_time_sec', reverse=true) | first if line_procs else none %}
+
+<div class="line-section">
+    <div class="line-section-header">
+        <h3>{{ lt }}</h3>
+        <div class="line-stats">
+            <span>投资: ${{ '%.2f' % line_inv }}</span>
+            <span>人员: {{ '%.1f' % line_hc if line_hc % 1 != 0 else line_hc | int }}</span>
+            <span>瓶颈: {% if line_bn and line_bn.cycle_time_sec %}{{ line_bn.item_name }} ({{ '%.1f' % line_bn.cycle_time_sec }}s){% else %}--{% endif %}</span>
+        </div>
+    </div>
+    <div style="padding: 0.75rem 1rem;">
+        {% for proc in line_procs %}
+        {% set proc_tools = line_items | selectattr('item_type', 'equalto', 'tool') | selectattr('parent_process', 'equalto', proc.item_name) | list %}
+        <div class="process-card {{ 'is-bottleneck' if global_bn and proc == global_bn and global_bn.cycle_time_sec else '' }}">
+            <div class="card-head">
+                <h3>{{ proc.item_name }}{% if global_bn and proc == global_bn and global_bn.cycle_time_sec %}<span class="badge-bn">BOTTLENECK</span>{% endif %}</h3>
+            </div>
+            <div class="card-fields">
+                <div class="field-group"><label>投资金额 (USD)</label><div class="value">${{ '%.2f' % (proc.investment_usd or 0) }}</div></div>
+                <div class="field-group"><label>标准工时</label><div class="value">{{ '%.1f' % (proc.cycle_time_sec or 0) }}s</div></div>
+                <div class="field-group"><label>作业人数</label><div class="value">{{ proc.operator_count or 0 }}</div></div>
+            </div>
+            {% if proc_tools %}
+            <div class="card-tools">
+                {% for t in proc_tools %}
+                <div class="tool-item"><span>{{ t.item_name }}</span><span class="tool-inv">${{ '%.2f' % (t.investment_usd or 0) }}</span></div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="card"><div style="text-align:center;padding:2rem;color:var(--gray-400);">暂无工序数据</div></div>
+{% endif %}
+{% endblock %}

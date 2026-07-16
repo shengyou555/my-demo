@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}项目列表 - NPE{% endblock %}
+
+{% block content %}
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+    <h2 style="font-size:1.2rem;font-weight:700;">项目列表</h2>
+    <a href="{{ url_for('create_project') }}" class="btn btn-primary">+ 新建项目</a>
+</div>
+
+{% if projects %}
+<div class="card">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>项目编号</th>
+                <th>项目名称</th>
+                <th>客户</th>
+                <th>工程师</th>
+                <th>事由</th>
+                <th>项目阶段</th>
+                <th>涉及产线</th>
+                <th>创建时间</th>
+                <th style="text-align:right;">操作</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for p in projects %}
+            <tr>
+                <td><code style="background:var(--gray-100);padding:2px 6px;border-radius:4px;font-size:0.8rem;">{{ p.project_number or '-' }}</code></td>
+                <td style="font-weight:600;">{{ p.project_name }}</td>
+                <td>{{ p.customer or '-' }}</td>
+                <td>
+                    {{ p.created_by or '-' }}
+                    {% if p.created_by == current_user %}
+                    <span style="background:#dbeafe;color:#1d4ed8;font-size:0.65rem;padding:1px 5px;border-radius:3px;margin-left:4px;">我的</span>
+                    {% endif %}
+                </td>
+                <td>{{ p.reason or '-' }}</td>
+                <td>{{ p.project_phase or '-' }}</td>
+                <td style="font-size:0.8rem;max-width:160px;">{{ p.used_lines or '-' }}</td>
+                <td style="color:var(--gray-500);font-size:0.8rem;">{{ p.created_at[:10] }}</td>
+                <td style="text-align:right;">
+                    {% if p.created_by == current_user or is_superuser %}
+                    <a href="{{ url_for('edit_project', project_id=p.id) }}" class="btn btn-sm btn-outline">编辑</a>
+                    {% else %}
+                    <a href="{{ url_for('view_project', project_id=p.id) }}" class="btn btn-sm btn-outline">查看</a>
+                    {% endif %}
+                    <a href="{{ url_for('export_pdf', project_id=p.id) }}" class="btn btn-sm btn-success" target="_blank">PDF</a>
+                    {% if is_superuser %}
+                    <button onclick="cloneProject({{ p.id }})" class="btn btn-sm btn-outline" style="margin-left:4px;">克隆</button>
+                    <button onclick="deleteProject({{ p.id }})" class="btn btn-sm btn-danger" style="margin-left:4px;">删除</button>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="card">
+    <div style="text-align:center;padding:3rem;color:var(--gray-400);"><p>暂无项目，点击上方按钮创建</p></div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function cloneProject(id) {
+    if (!confirm('确定克隆此项目？')) return;
+    const res = await fetch(`/project/${id}/clone`, {method: 'POST'});
+    const data = await res.json();
+    if (data.ok) {
+        alert('克隆成功！');
+        location.reload();
+    } else {
+        alert('克隆失败：' + (data.msg || '未知错误'));
+    }
+}
+async function deleteProject(id) {
+    if (!confirm('确定删除此项目？此操作不可恢复！')) return;
+    if (!confirm('再次确认：删除项目将清除所有关联数据！')) return;
+    const res = await fetch(`/project/${id}`, {method: 'DELETE'});
+    const data = await res.json();
+    if (data.ok) {
+        location.reload();
+    } else {
+        alert('删除失败：' + (data.msg || '未知错误'));
+    }
+}
+</script>
+{% endblock %}

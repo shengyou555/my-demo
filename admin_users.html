@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}用户管理 - NPE{% endblock %}
+
+{% block content %}
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+    <h2 style="font-size:1.2rem;font-weight:700;">用户管理</h2>
+    <a href="{{ url_for('index') }}" class="btn btn-outline">返回项目列表</a>
+</div>
+
+<div class="card">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>用户名</th>
+                <th>注册时间</th>
+                <th style="text-align:right;">操作</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for u in users %}
+            <tr>
+                <td>{{ u.id }}</td>
+                <td style="font-weight:600;">{{ u.username }}</td>
+                <td style="color:var(--gray-500);font-size:0.8rem;">{{ u.created_at }}</td>
+                <td style="text-align:right;">
+                    <button onclick="showResetModal({{ u.id }}, '{{ u.username }}')" class="btn btn-sm btn-outline">重置密码</button>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Reset Password Modal -->
+<div id="resetModal" class="comment-modal-overlay" style="display:none;">
+    <div class="comment-modal">
+        <h3>重置密码</h3>
+        <p>为用户 <strong id="resetUserName"></strong> 设置新密码：</p>
+        <input type="hidden" id="resetUserId">
+        <input type="password" id="newPassword" class="form-control" placeholder="输入新密码" style="margin-bottom:12px;">
+        <input type="password" id="confirmPassword" class="form-control" placeholder="确认新密码">
+        <div class="modal-actions" style="margin-top:16px;">
+            <button onclick="hideResetModal()" class="btn btn-outline">取消</button>
+            <button onclick="submitReset()" class="btn btn-primary">确认重置</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function showResetModal(userId, userName) {
+    document.getElementById('resetUserId').value = userId;
+    document.getElementById('resetUserName').textContent = userName;
+    document.getElementById('newPassword').value = '';
+    document.getElementById('confirmPassword').value = '';
+    document.getElementById('resetModal').style.display = 'flex';
+}
+function hideResetModal() {
+    document.getElementById('resetModal').style.display = 'none';
+}
+async function submitReset() {
+    const userId = document.getElementById('resetUserId').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    if (!newPassword) { alert('请输入新密码'); return; }
+    if (newPassword !== confirmPassword) { alert('两次密码不一致'); return; }
+
+    const formData = new FormData();
+    formData.append('user_id', userId);
+    formData.append('new_password', newPassword);
+
+    const res = await fetch('/admin/reset-password', {method: 'POST', body: formData});
+    const data = await res.json();
+    if (data.ok) {
+        alert('密码重置成功！');
+        hideResetModal();
+    } else {
+        alert('重置失败：' + (data.msg || '未知错误'));
+    }
+}
+</script>
+{% endblock %}
