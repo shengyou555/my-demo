@@ -1,0 +1,816 @@
+{% extends "base.html" %}
+{% block title %}{{ project.project_name }} - 编辑{% endblock %}
+
+{% block extra_css %}
+<style>
+    .columns-wrapper {
+        display: flex;
+        gap: 1rem;
+        overflow-x: auto;
+        padding-bottom: 1rem;
+    }
+    .line-column {
+        min-width: 360px;
+        max-width: 380px;
+        flex: 0 0 auto;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        display: flex;
+        flex-direction: column;
+    }
+    .line-column .col-head {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--gray-100);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .line-column .col-head select {
+        flex: 1;
+        margin-right: 8px;
+    }
+    .line-column .col-stats {
+        padding: 0.75rem 1rem;
+        background: #f0f7ff;
+        border-bottom: 1px solid #bfdbfe;
+        font-size: 0.85rem;
+    }
+    .line-column .col-stats .stat-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 4px;
+    }
+    .line-column .col-stats .stat-row .stat-label { color: var(--gray-500); }
+    .line-column .col-stats .stat-row .stat-value { font-weight: 600; color: var(--gray-800); }
+    .line-column .col-stats .stat-row .stat-value.bn { color: var(--danger); }
+    .line-column .process-list {
+        flex: 1;
+        overflow-y: auto;
+        max-height: 60vh;
+        padding: 0.5rem 1rem;
+    }
+    .process-row {
+        padding: 6px 0;
+        border-bottom: 1px solid var(--gray-100);
+    }
+    .process-row.disabled { opacity: 0.55; }
+    .process-row .process-main {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .process-row .process-main input[type=checkbox] {
+        width: 16px; height: 16px; accent-color: var(--primary); flex-shrink: 0;
+    }
+    .process-row .process-main .proc-name {
+        font-size: 0.85rem; font-weight: 600; flex: 1;
+    }
+    .process-row .process-fields {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 6px;
+        margin-left: 26px;
+        margin-top: 4px;
+    }
+    .process-row .process-fields input {
+        padding: 4px 6px;
+        border: 1px solid var(--gray-300);
+        border-radius: 4px;
+        font-size: 0.8rem;
+        width: 100%;
+    }
+    .process-row .process-fields input:focus {
+        outline: none; border-color: var(--primary);
+    }
+    .process-row .process-fields input:disabled {
+        background: var(--gray-50);
+        color: var(--gray-400);
+        cursor: not-allowed;
+    }
+    .tool-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-left: 48px;
+        padding: 3px 0;
+        font-size: 0.8rem;
+    }
+    .tool-row input[type=checkbox] {
+        width: 14px; height: 14px; accent-color: var(--primary); flex-shrink: 0;
+    }
+    .tool-row .tool-name { color: var(--gray-600); flex: 1; }
+    .tool-row input[type=text] {
+        width: 100px;
+        padding: 3px 6px;
+        border: 1px solid var(--gray-300);
+        border-radius: 4px;
+        font-size: 0.8rem;
+        text-align: right;
+    }
+    .tool-row input[type=text]:disabled {
+        background: var(--gray-50);
+        color: var(--gray-400);
+    }
+    .col-footer {
+        padding: 0.75rem 1rem;
+        border-top: 1px solid var(--gray-100);
+        text-align: center;
+    }
+    .add-column-btn {
+        min-width: 200px;
+        flex: 0 0 auto;
+        border: 2px dashed var(--gray-300);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: var(--gray-500);
+        font-weight: 600;
+        font-size: 0.9rem;
+        background: white;
+    }
+    .add-column-btn:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+        background: #f0f7ff;
+    }
+    .no-processes {
+        text-align: center; color: var(--gray-400); padding: 2rem 1rem; font-size: 0.85rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% if not is_owner and not is_superuser %}
+<div class="read-only-banner">
+    此项目由 <strong>{{ project.created_by }}</strong> 创建，您只有查看权限。
+    <a href="{{ url_for('view_project', project_id=project.id) }}" style="color:#92400e;text-decoration:underline;margin-left:8px;">切换到查看模式</a>
+</div>
+{% endif %}
+<!-- Project Info -->
+<div class="card">
+    <div class="card-body">
+        <div class="form-row">
+            <div class="form-group">
+                <label>项目名称</label>
+                <input type="text" id="f_project_name" class="form-control" value="{{ project.project_name }}">
+            </div>
+            <div class="form-group">
+                <label>项目编号</label>
+                <input type="text" id="f_project_number" class="form-control" value="{{ project.project_number or '' }}">
+            </div>
+            <div class="form-group">
+                <label>客户</label>
+                <input type="text" id="f_customer" class="form-control" value="{{ project.customer or '' }}">
+            </div>
+            <div class="form-group">
+                <label>工程师</label>
+                <input type="text" id="f_created_by" class="form-control" value="{{ project.created_by or '' }}">
+            </div>
+            <div class="form-group">
+                <label>事由</label>
+                <select id="f_reason" class="form-control">
+                    <option value="">-- 选择事由 --</option>
+                    <option value="新项目报价输入" {{ 'selected' if project.reason == '新项目报价输入' else '' }}>新项目报价输入</option>
+                    <option value="ECN变更输入" {{ 'selected' if project.reason == 'ECN变更输入' else '' }}>ECN变更输入</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>项目阶段</label>
+                <select id="f_project_phase" class="form-control">
+                    <option value="">-- 选择项目阶段 --</option>
+                    {% for short, full in project_phases.items() %}
+                    <option value="{{ short }}" {{ 'selected' if project.project_phase == short else '' }}>{{ short }} - {{ full }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Action Bar -->
+<div class="action-bar">
+    {% if is_owner or is_superuser %}
+    <button class="btn btn-outline" onclick="saveProjectInfo()">保存项目信息</button>
+    <div class="spacer"></div>
+    {% endif %}
+    <a href="{{ url_for('view_project', project_id=project.id) }}" class="btn btn-outline">查看</a>
+    <a href="{{ url_for('export_pdf', project_id=project.id) }}" class="btn btn-success" target="_blank">导出 PDF</a>
+</div>
+
+<!-- Columns Wrapper -->
+<div class="columns-wrapper" id="columnsWrapper"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const PROJECT_ID = {{ project.id }};
+const PROJECT_VERSION = {{ project.version or 1 }};
+const IS_OWNER = {{ 'true' if is_owner else 'false' }};
+const IS_SUPERUSER = {{ 'true' if is_superuser else 'false' }};
+const CAN_EDIT = IS_OWNER || IS_SUPERUSER;
+const LINES = {{ lines | tojson }};
+const SAVED_ITEMS = {{ items | tojson }};
+
+// columns: [{id, line_type, processes:[{name, checked, investment_usd, cycle_time_sec, operator_count, tools:[{name, checked, investment_usd}]}]}]
+let columns = [];
+let colIdCounter = 0;
+let hasUnsavedChanges = false;
+let PREV_VERSIONS = {};  // { "process__name": {investment_usd, cycle_time_sec, operator_count}, ... }
+
+// ==================== Helpers ====================
+function formatCurrency(v) {
+    const n = parseFloat(v) || 0;
+    return '$' + n.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+function parseCurrency(s) {
+    if (typeof s === 'number') return s;
+    return parseFloat(String(s).replace(/[^0-9.\-]/g, '')) || 0;
+}
+function esc(s) {
+    const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML;
+}
+function getUsedLineTypes() {
+    return new Set(columns.filter(c => c.line_type).map(c => c.line_type));
+}
+
+// ==================== Column Lifecycle ====================
+function addColumn(line_type) {
+    const colId = ++colIdCounter;
+    const col = {
+        id: colId,
+        line_type: line_type || '',
+        processes: []
+    };
+    if (line_type && LINES[line_type]) {
+        col.processes = LINES[line_type].processes.map(p => ({
+            name: p.name,
+            checked: false,
+            investment_usd: 0,
+            cycle_time_sec: 0,
+            operator_count: 0,
+            tools: (p.tools || []).map(t => ({
+                name: t,
+                checked: false,
+                investment_usd: 0
+            }))
+        }));
+    }
+    columns.push(col);
+    renderColumns();
+    return colId;
+}
+
+function removeColumn(colId) {
+    if (!confirm('确定删除此产线列？该产线的保存数据也会被清除。')) return;
+    const col = columns.find(c => c.id === colId);
+    if (col && col.line_type) {
+        // Also delete from DB
+        fetch(`/project/${PROJECT_ID}/save-line-items`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({line_type: col.line_type, items: []})
+        });
+    }
+    columns = columns.filter(c => c.id !== colId);
+    renderColumns();
+}
+
+function onColumnLineChange(colId) {
+    const col = columns.find(c => c.id === colId);
+    if (!col) return;
+    const sel = document.getElementById(`line-select-${colId}`);
+    const newLine = sel.value;
+    // If has unsaved changes on this column, confirm before switching
+    if (hasUnsavedChanges && col.line_type && newLine !== col.line_type) {
+        if (!confirm('当前产线有未保存的修改，切换产线类型将丢失数据。是否继续？')) {
+            sel.value = col.line_type;
+            return;
+        }
+    }
+    if (!newLine || !LINES[newLine]) {
+        col.line_type = '';
+        col.processes = [];
+    } else {
+        col.line_type = newLine;
+        col.processes = LINES[newLine].processes.map(p => ({
+            name: p.name,
+            checked: false,
+            investment_usd: 0,
+            cycle_time_sec: 0,
+            operator_count: 0,
+            tools: (p.tools || []).map(t => ({
+                name: t,
+                checked: false,
+                investment_usd: 0
+            }))
+        }));
+    }
+    hasUnsavedChanges = true;
+    renderColumns();
+}
+
+// ==================== Toggle & Update ====================
+function toggleProcess(colId, procIdx) {
+    hasUnsavedChanges = true;
+    const col = columns.find(c => c.id === colId);
+    if (!col || !col.processes[procIdx]) return;
+    col.processes[procIdx].checked = !col.processes[procIdx].checked;
+    if (!col.processes[procIdx].checked) {
+        col.processes[procIdx].investment_usd = 0;
+        col.processes[procIdx].cycle_time_sec = 0;
+        col.processes[procIdx].operator_count = 0;
+        col.processes[procIdx].tools.forEach(t => {
+            t.checked = false;
+            t.investment_usd = 0;
+        });
+    }
+    updateColumnStats(colId);
+    hasUnsavedChanges = true;
+    updateUnsavedUI();
+    renderColumns();
+}
+
+function toggleTool(colId, procIdx, toolIdx) {
+    hasUnsavedChanges = true;
+    const col = columns.find(c => c.id === colId);
+    if (!col || !col.processes[procIdx] || !col.processes[procIdx].tools[toolIdx]) return;
+    const tool = col.processes[procIdx].tools[toolIdx];
+    tool.checked = !tool.checked;
+    if (!tool.checked) tool.investment_usd = 0;
+    updateColumnStats(colId);
+    hasUnsavedChanges = true;
+    updateUnsavedUI();
+    renderColumns();
+}
+
+function updateProcessField(colId, procIdx, field, value) {
+    hasUnsavedChanges = true;
+    const col = columns.find(c => c.id === colId);
+    if (!col || !col.processes[procIdx]) return;
+    col.processes[procIdx][field] = field === 'investment_usd' ? parseCurrency(value) : (parseFloat(value) || 0);
+    updateColumnStats(colId);
+    updateUnsavedUI();
+    // NOTE: intentionally NOT calling renderColumns() here to avoid scroll position reset
+}
+
+function updateToolField(colId, procIdx, toolIdx, value) {
+    hasUnsavedChanges = true;
+    const col = columns.find(c => c.id === colId);
+    if (!col || !col.processes[procIdx] || !col.processes[procIdx].tools[toolIdx]) return;
+    col.processes[procIdx].tools[toolIdx].investment_usd = parseCurrency(value);
+    updateColumnStats(colId);
+    updateUnsavedUI();
+}
+
+function onCurrencyBlur(input) {
+    const num = parseCurrency(input.value);
+    if (num > 0) input.value = formatCurrency(num);
+    else input.value = '';
+}
+
+// ==================== Stats ====================
+function updateColumnStats(colId) {
+    const col = columns.find(c => c.id === colId);
+    if (!col) return;
+    let totalInv = 0, totalHC = 0, maxCT = 0, bnName = '';
+    col.processes.forEach(p => {
+        if (!p.checked) return;
+        let pInv = p.investment_usd || 0;
+        p.tools.forEach(t => { if (t.checked) pInv += t.investment_usd || 0; });
+        totalInv += pInv;
+        totalHC += p.operator_count || 0;
+        if ((p.cycle_time_sec || 0) > maxCT) {
+            maxCT = p.cycle_time_sec;
+            bnName = p.name;
+        }
+    });
+
+    const elInv = document.getElementById(`stat-inv-${colId}`);
+    const elBn = document.getElementById(`stat-bn-${colId}`);
+    const elHc = document.getElementById(`stat-hc-${colId}`);
+    if (elInv) elInv.textContent = formatCurrency(totalInv);
+    if (elBn) elBn.textContent = bnName ? `${bnName} (${maxCT.toFixed(1)}s)` : '--';
+    if (elHc) elHc.textContent = totalHC % 1 === 0 ? totalHC : totalHC.toFixed(1);
+}
+
+// ==================== Render ====================
+function renderColumns() {
+    const wrapper = document.getElementById('columnsWrapper');
+    const usedTypes = getUsedLineTypes();
+    // Save horizontal scroll position before re-render
+    const savedScrollLeft = wrapper.scrollLeft;
+    // Save per-column vertical scroll positions (process-list scrollTop)
+    const savedScrollTops = {};
+    columns.forEach(col => {
+        const pl = document.getElementById(`process-list-${col.id}`);
+        if (pl) savedScrollTops[col.id] = pl.scrollTop;
+    });
+
+    let html = '';
+    columns.forEach(col => {
+        html += renderColumn(col, usedTypes);
+    });
+
+    // Add-column button
+    html += `<div class="add-column-btn" onclick="addColumn()">
+        <div style="text-align:center;">
+            <div style="font-size:1.5rem;margin-bottom:4px;">+</div>
+            <div>增加产线</div>
+        </div>
+    </div>`;
+
+    wrapper.innerHTML = html;
+    // Restore horizontal scroll position after re-render
+    wrapper.scrollLeft = savedScrollLeft;
+    // Restore per-column vertical scroll positions after re-render
+    Object.entries(savedScrollTops).forEach(([colId, top]) => {
+        const pl = document.getElementById(`process-list-${colId}`);
+        if (pl) pl.scrollTop = top;
+    });
+}
+
+function renderColumn(col, usedTypes) {
+    const colId = col.id;
+    const hasLine = col.line_type && LINES[col.line_type];
+
+    // Stats (computed fresh)
+    let totalInv = 0, totalHC = 0, maxCT = 0, bnName = '';
+    col.processes.forEach(p => {
+        if (!p.checked) return;
+        let pInv = p.investment_usd || 0;
+        p.tools.forEach(t => { if (t.checked) pInv += t.investment_usd || 0; });
+        totalInv += pInv;
+        totalHC += p.operator_count || 0;
+        if ((p.cycle_time_sec || 0) > maxCT) {
+            maxCT = p.cycle_time_sec;
+            bnName = p.name;
+        }
+    });
+
+    // Line selector options
+    let lineOpts = '<option value="">-- 选择产线 --</option>';
+    Object.keys(LINES).forEach(key => {
+        const disabled = usedTypes.has(key) && key !== col.line_type ? 'disabled' : '';
+        const selected = key === col.line_type ? 'selected' : '';
+        const hint = LINES[key].hint ? ` (${LINES[key].hint})` : '';
+        lineOpts += `<option value="${esc(key)}" ${selected} ${disabled}>${esc(key)}${esc(hint)}</option>`;
+    });
+
+    let contentHtml = '';
+    if (!hasLine) {
+        contentHtml = `<div class="no-processes">请先选择产线类型</div>`;
+    } else {
+        contentHtml = col.processes.map((p, pi) => {
+            const prevKey = getPrevKey('process', p.name, null);
+            const prev = PREV_VERSIONS[prevKey];
+            const prevInvHtml = prev ? `<div class="prev-value ${getPrevValueClass('investment_usd', p.investment_usd||0, prev.investment_usd||0)}">上次: ${formatPrevValue('investment_usd', prev.investment_usd)}</div>` : '';
+            const prevCtHtml = prev ? `<div class="prev-value ${getPrevValueClass('cycle_time_sec', p.cycle_time_sec||0, prev.cycle_time_sec||0)}">上次: ${formatPrevValue('cycle_time_sec', prev.cycle_time_sec)}</div>` : '';
+            const prevHcHtml = prev ? `<div class="prev-value ${getPrevValueClass('operator_count', p.operator_count||0, prev.operator_count||0)}">上次: ${formatPrevValue('operator_count', prev.operator_count)}</div>` : '';
+
+            const procFields = p.checked
+                ? `<div class="process-fields">
+                    <div><input type="text" class="currency" placeholder="投资 USD"
+                        value="${p.investment_usd ? formatCurrency(p.investment_usd) : ''}"
+                        onblur="onCurrencyBlur(this)" onchange="updateProcessField(${colId}, ${pi}, 'investment_usd', this.value)">
+                        ${prevInvHtml}</div>
+                    <div><input type="number" class="number" step="0.1" min="0" placeholder="工时(秒)"
+                        value="${p.cycle_time_sec || ''}"
+                        onchange="updateProcessField(${colId}, ${pi}, 'cycle_time_sec', this.value)">
+                        ${prevCtHtml}</div>
+                    <div><input type="number" class="number" step="0.5" min="0" placeholder="人数"
+                        value="${p.operator_count || ''}"
+                        onchange="updateProcessField(${colId}, ${pi}, 'operator_count', this.value)">
+                        ${prevHcHtml}</div>
+                   </div>`
+                : `<div class="process-fields">
+                    <div><input type="text" class="currency" placeholder="投资 USD" disabled></div>
+                    <div><input type="number" class="number" placeholder="工时(秒)" disabled></div>
+                    <div><input type="number" class="number" placeholder="人数" disabled></div>
+                   </div>`;
+
+            const toolsHtml = p.tools.map((t, ti) => {
+                const tPrevKey = getPrevKey('tool', t.name, p.name);
+                const tPrev = PREV_VERSIONS[tPrevKey];
+                const tPrevHtml = (tPrev && t.checked) ? `<span class="prev-value ${getPrevValueClass('investment_usd', t.investment_usd||0, tPrev.investment_usd||0)}" style="margin-left:4px;">上次: ${formatPrevValue('investment_usd', tPrev.investment_usd)}</span>` : '';
+                return `<div class="tool-row">
+                    <input type="checkbox" ${t.checked ? 'checked' : ''}
+                        onchange="toggleTool(${colId}, ${pi}, ${ti})">
+                    <span class="tool-name">${esc(t.name)}</span>
+                    <input type="text" class="currency" placeholder="投资 USD"
+                        value="${t.checked && t.investment_usd ? formatCurrency(t.investment_usd) : ''}"
+                        onblur="onCurrencyBlur(this)" onchange="updateToolField(${colId}, ${pi}, ${ti}, this.value)"
+                        ${t.checked ? '' : 'disabled'}>
+                    ${tPrevHtml}
+                </div>`;
+            }).join('');
+
+            return `<div class="process-row ${p.checked ? '' : 'disabled'}">
+                <div class="process-main">
+                    <input type="checkbox" ${p.checked ? 'checked' : ''}
+                        onchange="toggleProcess(${colId}, ${pi})">
+                    <span class="proc-name">${esc(p.name)}</span>
+                </div>
+                ${procFields}
+                ${toolsHtml}
+            </div>`;
+        }).join('');
+    }
+
+    return `<div class="line-column" id="col-${colId}">
+        <div class="col-head">
+            <select id="line-select-${colId}" class="form-control" onchange="onColumnLineChange(${colId})">
+                ${lineOpts}
+            </select>
+            <button class="btn btn-sm btn-danger" onclick="removeColumn(${colId})">删除</button>
+        </div>
+        <div class="col-stats">
+            <div class="stat-row"><span class="stat-label">总投资</span><span class="stat-value" id="stat-inv-${colId}">${formatCurrency(totalInv)}</span></div>
+            <div class="stat-row"><span class="stat-label">瓶颈</span><span class="stat-value bn" id="stat-bn-${colId}">${bnName ? esc(bnName) + ' (' + maxCT.toFixed(1) + 's)' : '--'}</span></div>
+            <div class="stat-row"><span class="stat-label">作业人员</span><span class="stat-value" id="stat-hc-${colId}">${totalHC % 1 === 0 ? totalHC : totalHC.toFixed(1)}</span></div>
+        </div>
+        <div class="process-list" id="process-list-${colId}">
+            ${contentHtml}
+        </div>
+        <div class="col-footer">
+            <textarea id="save-comment-${colId}" placeholder="修改说明（可选，建议填写）" ${hasLine ? '' : 'disabled'}
+                style="width:100%;height:44px;margin-bottom:8px;font-size:0.78rem;border:1px solid var(--gray-300);border-radius:4px;padding:5px 6px;resize:vertical;"></textarea>
+            <div style="display:flex;align-items:center;justify-content:center;gap:6px;">
+                <button class="btn btn-primary" id="save-btn-${colId}" onclick="saveColumn(${colId})" ${hasLine ? '' : 'disabled'}>保存此产线</button>
+                <span class="unsaved-badge" id="unsaved-badge-${colId}" style="display:none;">未保存</span>
+            </div>
+        </div>
+    </div>`;
+}
+
+// ==================== Unsaved UI ====================
+function updateUnsavedUI() {
+    columns.forEach(col => {
+        const btn = document.getElementById(`save-btn-${col.id}`);
+        const badge = document.getElementById(`unsaved-badge-${col.id}`);
+        if (btn && col.line_type) {
+            if (hasUnsavedChanges) {
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-unsaved');
+                btn.disabled = false;
+            } else {
+                btn.classList.remove('btn-unsaved');
+                btn.classList.add('btn-primary');
+            }
+        }
+        if (badge && col.line_type) {
+            badge.style.display = hasUnsavedChanges ? 'inline' : 'none';
+        }
+    });
+    // Update page title
+    const titleEl = document.querySelector('.topbar h1');
+    if (titleEl) {
+        const existing = document.getElementById('unsaved-title-badge');
+        if (hasUnsavedChanges) {
+            if (!existing) {
+                const sp = document.createElement('span');
+                sp.id = 'unsaved-title-badge';
+                sp.className = 'unsaved-badge';
+                sp.textContent = '未保存';
+                sp.style.marginLeft = '8px';
+                titleEl.appendChild(sp);
+            }
+        } else {
+            if (existing) existing.remove();
+        }
+    }
+}
+
+// Warn before leaving page with unsaved changes
+window.addEventListener('beforeunload', function(e) {
+    if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '您有未保存的修改，确定要离开吗？';
+    }
+});
+
+// Comment modal for empty comment warning
+function showCommentModal(colId) {
+    const overlay = document.createElement('div');
+    overlay.className = 'comment-modal-overlay';
+    overlay.id = 'commentModal';
+    overlay.innerHTML = `
+        <div class="comment-modal">
+            <h3>建议填写修改说明</h3>
+            <p>您尚未填写修改说明，是否继续保存？建议填写修改原因以便后续追溯。</p>
+            <div class="modal-actions">
+                <button class="btn btn-outline" onclick="document.getElementById('commentModal').remove()">返回补充</button>
+                <button class="btn btn-primary" onclick="document.getElementById('commentModal').remove(); doSaveColumn(${colId}, '');">继续保存</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+}
+
+// ==================== Save ====================
+async function saveProjectInfo() {
+    if (!CAN_EDIT) { alert('您没有编辑权限'); return; }
+    const data = {
+        project_name: document.getElementById('f_project_name').value,
+        project_number: document.getElementById('f_project_number').value,
+        customer: document.getElementById('f_customer').value,
+        created_by: document.getElementById('f_created_by').value,
+        reason: document.getElementById('f_reason').value,
+        project_phase: document.getElementById('f_project_phase').value,
+        version: PROJECT_VERSION
+    };
+    const resp = await fetch(`/project/${PROJECT_ID}/edit`, {
+        method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)
+    });
+    if (resp.status === 409) {
+        alert('该项目已被其他工程师更新，页面将自动刷新');
+        location.reload();
+        return;
+    }
+    hasUnsavedChanges = false;
+    updateUnsavedUI();
+    showToast('项目信息已保存');
+}
+
+async function saveColumn(colId) {
+    if (!CAN_EDIT) { alert('您没有编辑权限'); return; }
+    const col = columns.find(c => c.id === colId);
+    if (!col || !col.line_type) { alert('请先选择产线'); return; }
+
+    // Validation: checked processes must have at least one data field filled
+    const invalidNames = [];
+    col.processes.forEach(p => {
+        if (!p.checked) return;
+        const hasData = (p.investment_usd > 0) ||
+                        (p.cycle_time_sec > 0) ||
+                        (p.operator_count > 0) ||
+                        p.tools.some(t => t.checked && t.investment_usd > 0);
+        if (!hasData) invalidNames.push(p.name);
+    });
+    if (invalidNames.length > 0) {
+        alert('以下工序已勾选但未填写任何数据（投资/工时/人数），请补充：\n' + invalidNames.join('、'));
+        return;
+    }
+
+    // Check comment
+    const commentEl = document.getElementById(`save-comment-${colId}`);
+    const comment = commentEl ? (commentEl.value || '').trim() : '';
+
+    // If comment is empty and there's previous version data, show warning modal
+    const hasPrevVersions = Object.keys(PREV_VERSIONS).length > 0;
+    if (!comment && hasPrevVersions) {
+        showCommentModal(colId);
+        return;
+    }
+
+    await doSaveColumn(colId, comment);
+}
+
+async function doSaveColumn(colId, comment) {
+    const col = columns.find(c => c.id === colId);
+    if (!col) return;
+
+    const items = [];
+    col.processes.forEach(p => {
+        if (!p.checked) return;
+
+        items.push({
+            item_type: 'process',
+            item_name: p.name,
+            parent_process: null,
+            line_type: col.line_type,
+            investment_usd: p.investment_usd || 0,
+            cycle_time_sec: p.cycle_time_sec || 0,
+            operator_count: p.operator_count || 0
+        });
+
+        p.tools.forEach(t => {
+            if (t.checked) {
+                items.push({
+                    item_type: 'tool',
+                    item_name: t.name,
+                    parent_process: p.name,
+                    line_type: col.line_type,
+                    investment_usd: t.investment_usd || 0,
+                    cycle_time_sec: 0,
+                    operator_count: 0
+                });
+            }
+        });
+    });
+
+    const resp = await fetch(`/project/${PROJECT_ID}/save-line-items`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({line_type: col.line_type, items: items, comment: comment})
+    });
+    if (resp.status === 503) {
+        alert('数据库繁忙，请稍后重试');
+        return;
+    }
+    // Clear comment textarea
+    const commentEl = document.getElementById(`save-comment-${colId}`);
+    if (commentEl) commentEl.value = '';
+
+    hasUnsavedChanges = false;
+    updateUnsavedUI();
+    showToast(`产线 [${col.line_type}] 已保存`);
+
+    // Refresh previous versions for comparison
+    fetchItemVersions();
+}
+
+function showToast(msg) {
+    const t = document.createElement('div');
+    t.className = 'toast'; t.textContent = msg;
+    document.body.appendChild(t);
+    requestAnimationFrame(() => t.classList.add('show'));
+    setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 2000);
+}
+
+// ==================== Prev Versions ====================
+function getPrevKey(itemType, itemName, parentProcess) {
+    return itemType + '__' + itemName + (parentProcess ? '__' + parentProcess : '');
+}
+function formatPrevValue(field, val) {
+    if (field === 'investment_usd') return '$' + (val || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    if (field === 'cycle_time_sec') return (val || 0).toFixed(1) + 's';
+    if (field === 'operator_count') return val || 0;
+    return val || 0;
+}
+function getPrevValueClass(field, curVal, prevVal) {
+    if (!prevVal && prevVal !== 0) return '';
+    if (curVal > prevVal) return 'increased';
+    if (curVal < prevVal) return 'decreased';
+    return '';
+}
+async function fetchItemVersions() {
+    try {
+        const resp = await fetch(`/project/${PROJECT_ID}/item-versions`);
+        if (resp.ok) {
+            const data = await resp.json();
+            PREV_VERSIONS = {};
+            (data.items || []).forEach(v => {
+                const key = getPrevKey(v.item_type, v.item_name, v.parent_process);
+                PREV_VERSIONS[key] = {
+                    investment_usd: v.investment_usd || 0,
+                    cycle_time_sec: v.cycle_time_sec || 0,
+                    operator_count: v.operator_count || 0
+                };
+            });
+            renderColumns(); // re-render to show prev values
+        }
+    } catch(e) { /* silently ignore */ }
+}
+
+// ==================== Init ====================
+document.addEventListener('DOMContentLoaded', async function() {
+    // Load previous versions for comparison
+    await fetchItemVersions();
+
+    // Group saved items by line_type
+    const groups = {};
+    SAVED_ITEMS.forEach(it => {
+        const lt = it.line_type || '{{ project.line_type }}' || '_unsorted';
+        if (!groups[lt]) groups[lt] = [];
+        groups[lt].push(it);
+    });
+
+    const groupKeys = Object.keys(groups);
+    if (groupKeys.length === 0) {
+        // No saved data, start with one empty column
+        addColumn();
+    } else {
+        groupKeys.forEach(lt => {
+            const lineType = lt === '_unsorted' ? '' : lt;
+            const colId = addColumn(lineType);
+            const col = columns.find(c => c.id === colId);
+            if (!col) return;
+
+            const savedItems = groups[lt];
+            col.processes.forEach(p => {
+                const savedProc = savedItems.find(it => it.item_type === 'process' && it.item_name === p.name);
+                if (savedProc) {
+                    p.checked = true;
+                    p.investment_usd = savedProc.investment_usd || 0;
+                    p.cycle_time_sec = savedProc.cycle_time_sec || 0;
+                    p.operator_count = savedProc.operator_count || 0;
+                }
+                p.tools.forEach(t => {
+                    const savedTool = savedItems.find(it => it.item_type === 'tool' && it.item_name === t.name && it.parent_process === p.name);
+                    if (savedTool) {
+                        t.checked = true;
+                        t.investment_usd = savedTool.investment_usd || 0;
+                    }
+                });
+            });
+        });
+        renderColumns();
+    }
+    hasUnsavedChanges = false;
+    updateUnsavedUI();
+});
+</script>
+{% endblock %}

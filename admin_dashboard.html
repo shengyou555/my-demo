@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}统计看板 - NPE{% endblock %}
+
+{% block content %}
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+    <h2 style="font-size:1.2rem;font-weight:700;">全局统计看板</h2>
+    <a href="{{ url_for('index') }}" class="btn btn-outline">返回项目列表</a>
+</div>
+
+<!-- Stat Cards -->
+<div class="stat-grid">
+    <div class="stat-card">
+        <div class="stat-label">总项目数</div>
+        <div class="stat-value">{{ total_projects }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">活跃工程师</div>
+        <div class="stat-value">{{ total_engineers }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">总投资额</div>
+        <div class="stat-value usd">${{ "{:,.2f}".format(total_investment_all) }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">平均项目投资</div>
+        <div class="stat-value usd">${{ "{:,.2f}".format(total_investment_all / total_projects if total_projects > 0 else 0) }}</div>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+    <!-- Engineer Stats -->
+    <div class="card">
+        <div class="card-header"><h2>各工程师项目数量</h2></div>
+        <div class="card-body">
+            <table class="data-table">
+                <thead>
+                    <tr><th>工程师</th><th>项目数</th><th style="text-align:right;">总投资额</th></tr>
+                </thead>
+                <tbody>
+                {% for s in stats_by_engineer %}
+                    <tr>
+                        <td style="font-weight:600;">{{ s.created_by or '未指定' }}</td>
+                        <td>{{ s.project_count }}</td>
+                        <td style="text-align:right;color:var(--primary);font-weight:600;">${{ "{:,.2f}".format(s.total_investment) }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Phase Stats -->
+    <div class="card">
+        <div class="card-header"><h2>项目阶段分布</h2></div>
+        <div class="card-body">
+            <table class="data-table">
+                <thead>
+                    <tr><th>项目阶段</th><th>数量</th></tr>
+                </thead>
+                <tbody>
+                {% for s in stats_by_phase %}
+                    <tr>
+                        <td>{{ s.project_phase or '未指定' }}</td>
+                        <td>
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <div style="flex:1;background:var(--gray-100);border-radius:4px;height:20px;overflow:hidden;">
+                                    <div style="width:{{ (s.count / stats_by_phase|map(attribute='count')|max * 100)|round }}%;background:var(--primary);height:100%;border-radius:4px;"></div>
+                                </div>
+                                <span style="font-weight:600;min-width:24px;text-align:right;">{{ s.count }}</span>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Projects -->
+<div class="card">
+    <div class="card-header"><h2>最近活跃项目（Top 10）</h2></div>
+    <div class="card-body">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>项目名称</th>
+                    <th>工程师</th>
+                    <th>项目阶段</th>
+                    <th style="text-align:right;">投资额</th>
+                    <th style="text-align:right;">创建时间</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for p in recent_projects %}
+                <tr>
+                    <td style="font-weight:600;">{{ p.project_name }}</td>
+                    <td>{{ p.created_by or '-' }}</td>
+                    <td>{{ p.project_phase or '-' }}</td>
+                    <td style="text-align:right;color:var(--primary);font-weight:600;">${{ "{:,.2f}".format(p.total_investment) }}</td>
+                    <td style="text-align:right;color:var(--gray-500);font-size:0.8rem;">{{ p.created_at[:10] }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
